@@ -5,6 +5,7 @@ import (
 	"MusicApp/internal/handlers"
 	"MusicApp/internal/handlers/Spotify"
 	"MusicApp/internal/repo/MongoDB"
+	"MusicApp/internal/tg_handlers"
 	"context"
 	"github.com/go-playground/validator/v10"
 	"github.com/skwizi4/lib/ErrChan"
@@ -15,14 +16,15 @@ import (
 
 // App - structure of app
 type App struct {
-	appName        string
-	bot            *tg.Bot
-	config         config.Config
-	errChan        *ErrChan.ErrorChannel
-	logger         logger.GoLogger
-	validator      *validator.Validate
-	mongo          *MongoDB.MongoDB
-	spotifyHandler handlers.Spotify
+	appName         string
+	bot             *tg.Bot
+	config          config.Config
+	errChan         *ErrChan.ErrorChannel
+	logger          logger.GoLogger
+	validator       *validator.Validate
+	mongo           *MongoDB.MongoDB
+	spotifyHandler  handlers.Spotify
+	telegramHandler tg_handlers.Handler
 }
 
 // New - return new variation of application
@@ -65,10 +67,14 @@ func (a App) InitErrHandler(ctx context.Context) {
 	a.errChan.Start()
 	a.logger.InfoFrmt("InitErrorHandler-Successfully")
 }
+
+// InitValidator Инициализирут  валидатор
 func (a App) InitValidator() {
 	a.validator = validator.New()
 	a.logger.InfoFrmt("initValidator-Successfully")
 }
+
+// PopulateConfig Проверяет конфиг
 func (a App) PopulateConfig() {
 	cfg, err := config.ParseConfig("C:\\golang\\src\\MusicApp\\config.json")
 	if err != nil {
@@ -81,6 +87,8 @@ func (a App) PopulateConfig() {
 	a.config = *cfg
 	a.logger.InfoFrmt("InitConfig-Successfully")
 }
+
+// InitMongo Инициализируем монго
 func (a App) InitMongo() {
 	var err error
 	a.mongo, err = MongoDB.InitMongo(a.config.MongoDb.Uri, a.config.MongoDb.DataBaseName, a.config.MongoDb.CollectionName)
@@ -89,6 +97,8 @@ func (a App) InitMongo() {
 	}
 	a.logger.InfoFrmt("InitMongo-Successfully")
 }
+
+// InitBot Инициализируем бота
 func (a App) InitBot() {
 	botSettings := tg.Settings{
 		Token:  a.config.BotToken.Token,
@@ -100,6 +110,31 @@ func (a App) InitBot() {
 	}
 	a.logger.InfoFrmt("InitTgBot-Successfully")
 }
+
+// InitHandlers - инициализирует хендлера
 func (a App) InitHandlers() {
 	a.spotifyHandler = Spotify.New()
+}
+
+// ListenTgBot - todo - отредактировать хендлера под задачи
+func (a App) ListenTgBot() {
+	go a.bot.Handle("/SpotifySong", func(msg *tg.Message) {
+		go a.telegramHandler.SpotifySong(msg)
+	})
+	go a.bot.Handle("SpotifyPlaylist", func(msg *tg.Message) {
+		go a.telegramHandler.SpotifyPlaylist(msg)
+	})
+	go a.bot.Handle("/Help", func(msg *tg.Message) {
+		go a.telegramHandler.Help(msg)
+	})
+	go a.bot.Handle("/YoutubeSong", func(msg *tg.Message) {
+		go a.telegramHandler.YouTubeSong(msg)
+	})
+	go a.bot.Handle("/YoutubePlaylist", func(msg *tg.Message) {
+		go a.telegramHandler.YouTubePlaylist(msg)
+	})
+	go a.bot.Handle("/FindSong", func(msg *tg.Message) {
+		go a.telegramHandler.FindSong(msg)
+	})
+
 }

@@ -16,10 +16,17 @@ func InitMongo(uri, databaseName, collectionName string) (*MongoDB, error) {
 	collection := client.Database(databaseName).Collection(collectionName)
 
 	return &MongoDB{
-		Client:         client,
-		DatabaseName:   databaseName,
-		CollectionName: collectionName,
-		Logger:         logger.InitLogger(),
-		Collection:     collection,
+		client:         client,
+		databaseName:   databaseName,
+		collectionName: collectionName,
+		logger:         logger.InitLogger(),
+		collection:     collection,
 	}, nil
 }
+
+// Create, Read, Update, Delete todo - Написать Универсальные методы
+
+func (m MongoDB) Create() {}
+func (m MongoDB) Read()   {}
+func (m MongoDB) Delete() {}
+func (m MongoDB) Update() {}

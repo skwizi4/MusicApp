@@ -1,5 +1,7 @@
 package handlers
 
+import "MusicApp/internal/domain"
+
 // todo - Написать структуры: MetaData, Song, Playlist ( directory - domain)
 
 type (
