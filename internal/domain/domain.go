@@ -47,11 +47,10 @@ func FindUserIndex(value interface{}, chatID int64) int {
 
 // Song - Structure of song(Spotify), media (YouTube)
 type Song struct {
-	title    string
-	artist   string
-	album    string
-	genre    string
-	duration string
+	Title  string
+	Artist string
+	Album  string
+	Genre  string
 }
 
 type MetaData struct {
@@ -65,25 +64,40 @@ type Playlist struct {
 // ProcessSpotifySong - Structure of handler "spotifyHandler";
 // + process for many users and some methods
 type ProcessSpotifySong struct {
+	SongId string
+	Song   Song
+	ChatID int64
+	Step   string
+}
+type ProcessingSpotifySongs []ProcessSpotifySong
+
+type ProcessSpotifyPlaylist struct {
+	chatID   int64
+	step     string
+	title    string
+	playlist Playlist
+}
+type ProcessingSpotifyPlaylists []ProcessSpotifyPlaylist
+
+type ProcessYouTubeSong struct {
+	chatID int64
 	songId string
 	song   Song
+	step   string
+}
+type ProcessingYoutubeSongs []ProcessYouTubeSong
+
+type ProcessYoutubePlaylist struct {
+	title  string
+	songs  []Playlist
 	chatID int64
 	step   string
 }
-type ProcessSpotifySongs []ProcessSpotifySong
+type ProcessingYoutubePlaylists []ProcessYoutubePlaylist
 
-type ProcessSpotifyPlaylist struct {
-	title string
-	songs []Playlist
-}
-type ProcessYouTubeSong struct {
-	songId string
-	song   Song
-}
-type ProcessYoutubePlaylist struct {
-	title string
-	songs []Playlist
-}
 type ProcessFindSong struct {
+	chatID   int64
 	metadata MetaData
+	step     string
 }
+type ProcessingFindSongs []ProcessFindSong
