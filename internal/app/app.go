@@ -2,6 +2,7 @@ package app
 
 import (
 	"MusicApp/internal/config"
+	"MusicApp/internal/domain"
 	"MusicApp/internal/handlers"
 	"MusicApp/internal/handlers/Spotify"
 	"MusicApp/internal/repo/MongoDB"
@@ -16,15 +17,16 @@ import (
 
 // App - structure of app
 type App struct {
-	appName         string
-	bot             *tg.Bot
-	config          config.Config
-	errChan         *ErrChan.ErrorChannel
-	logger          logger.GoLogger
-	validator       *validator.Validate
-	mongo           *MongoDB.MongoDB
-	spotifyHandler  handlers.Spotify
-	telegramHandler tg_handlers.Handler
+	appName                string
+	bot                    *tg.Bot
+	config                 config.Config
+	errChan                *ErrChan.ErrorChannel
+	logger                 logger.GoLogger
+	validator              *validator.Validate
+	mongo                  *MongoDB.MongoDB
+	spotifyHandler         handlers.Spotify
+	telegramHandler        tg_handlers.Handler
+	processingSpotifySongs domain.ProcessingSpotifySongs
 }
 
 // New - return new variation of application
@@ -113,7 +115,7 @@ func (a App) InitBot() {
 
 // InitHandlers - инициализирует хендлера
 func (a App) InitHandlers() {
-	a.spotifyHandler = Spotify.New()
+	a.spotifyHandler = Spotify.New(a.config.SpotifyToken.Token, &a.processingSpotifySongs)
 }
 
 // ListenTgBot - todo - отредактировать хендлера под задачи

@@ -1,19 +1,28 @@
 package Spotify
 
 import (
+	"MusicApp/internal/config"
 	"MusicApp/internal/domain"
+	"MusicApp/internal/services"
+	"MusicApp/internal/services/Spotify"
 	"github.com/skwizi4/lib/ErrChan"
 	tg "gopkg.in/tucnak/telebot.v2"
 )
 
 type Handler struct {
 	bot                    tg.Bot
-	processingSpotifySongs domain.ProcessingSpotifySongs
+	processingSpotifySongs *domain.ProcessingSpotifySongs
 	errChannel             *ErrChan.ErrorChannel
+	spotifyService         services.SpotifyService
+	cfg                    config.Config
 }
 
-func New() Handler {
-	return Handler{}
+func New(token string, processingSpotifySongs *domain.ProcessingSpotifySongs,
+) Handler {
+	return Handler{
+		spotifyService:         Spotify.NewSpotifyService(token),
+		processingSpotifySongs: processingSpotifySongs,
+	}
 }
 
 func (h Handler) GetSongByYoutubeLink(msg tg.Message) (*domain.Song, error) {
@@ -34,12 +43,13 @@ func (h Handler) GetSongByYoutubeLink(msg tg.Message) (*domain.Song, error) {
 			return nil, err
 		}
 	case domain.ProcessSpotifySongEnd:
-
-		if err := h.processingSpotifySongs.AddSongID( /* todo - Написать получение ID песни из ссылки*/ "", msg.Chat.ID); err != nil {
+		track, err := h.spotifyService.TrackById(msg.Text)
+		if err != nil {
 			h.errChannel.HandleError(err)
 			return nil, err
 		}
-		if err := h.processingSpotifySongs.AddSong( /*todo - Написать запрос к API Spotify и получение песни*/ domain.Song{}, msg.Chat.ID); err != nil {
+		//todo - пересмотреть логику добавления песни к состоянию пользователя
+		if err = h.processingSpotifySongs.AddSong(track, msg.Chat.ID); err != nil {
 			h.errChannel.HandleError(err)
 			return nil, err
 		}

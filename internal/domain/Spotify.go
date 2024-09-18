@@ -17,13 +17,7 @@ func (p *ProcessingSpotifySongs) GetOrCreate(chatID int64) ProcessSpotifySong {
 	*p = append(*p, NewProcess)
 	return NewProcess
 }
-func (p *ProcessingSpotifySongs) AddSongID(songID string, chatID int64) error {
-	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].SongId = songID
-		return nil
-	}
-	return errors.New(ErrChatIDNotFound)
-}
+
 func (p *ProcessingSpotifySongs) AddSong(song Song, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		(*p)[idx].Song = song

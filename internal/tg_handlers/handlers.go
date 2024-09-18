@@ -10,8 +10,17 @@ type Handler struct {
 func New() Handler {
 	return Handler{}
 }
-func (h Handler) SpotifySong(msg *tg.Message) {
 
+// todo - Добавить в основной тгешный хендлер хендлера спотика и ютуба, дописать запрос к ютубу после получения данных
+func (h Handler) SpotifySong(msg *tg.Message) {
+	// SpotifyTrack, err := h.Spotify.GetSongByYoutubeLink()
+	//if err != nil{
+	//	h.ErrChan.HandleError(err)
+	//}
+	// YouTubeMedia, err := h.Youtube.GetSongByMetaData()
+	//if err != nil{
+	//	h.ErrChan.HandleError(err)
+	//}
 }
 func (h Handler) Help(msg *tg.Message) {
 
