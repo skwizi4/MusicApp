@@ -17,6 +17,7 @@ type (
 		Token string `json:"token"`
 	}
 	SpotifyConfig struct {
+		Token string `json:"token"`
 	}
 	YoutubeConfig struct {
 	}
