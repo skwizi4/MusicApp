@@ -1,22 +1,28 @@
 package Spotify
 
 import (
+	"MusicApp/internal/config"
 	"MusicApp/internal/domain"
 	logger "github.com/skwizi4/lib/logs"
 	"net/http"
 	"net/url"
 )
 
-func NewSpotifyService(token string) ServiceSpotify {
+func NewSpotifyService(cfg *config.Config) ServiceSpotify {
 	return ServiceSpotify{
-		BaseUrl: BaseUrl,
-		ApiKey:  token,
-		Logger:  logger.InitLogger(),
+		BaseUrl:      BaseUrl,
+		ClientId:     cfg.SpotifyCfg.ClientID,
+		ClientSecret: cfg.SpotifyCfg.ClientSecret,
+		Logger:       logger.InitLogger(),
 	}
 }
+
 func (s ServiceSpotify) TrackById(link string) (domain.Song, error) {
 	id, err := ParseTrackIDFromURL(link)
 	if err != nil {
+		return domain.Song{}, err
+	}
+	if err = s.RequestToken(); err != nil {
 		return domain.Song{}, err
 	}
 	req, err := s.CreateRequest(http.MethodGet, "/v1/tracks/"+id)
@@ -27,10 +33,13 @@ func (s ServiceSpotify) TrackById(link string) (domain.Song, error) {
 	if err != nil {
 		return domain.Song{}, err
 	}
+
 	Track, err := s.decodeRespTrackById(resp)
+
 	if err != nil {
 		return domain.Song{}, err
 	}
+
 	return Track, nil
 
 }

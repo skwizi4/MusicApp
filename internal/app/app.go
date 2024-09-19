@@ -5,6 +5,7 @@ import (
 	"MusicApp/internal/domain"
 	"MusicApp/internal/handlers"
 	"MusicApp/internal/handlers/Spotify"
+	"MusicApp/internal/handlers/YouTube"
 	"MusicApp/internal/repo/MongoDB"
 	"MusicApp/internal/tg_handlers"
 	"context"
@@ -25,6 +26,7 @@ type App struct {
 	validator              *validator.Validate
 	mongo                  *MongoDB.MongoDB
 	spotifyHandler         handlers.Spotify
+	youtubeHandler         handlers.YouTube
 	telegramHandler        tg_handlers.Handler
 	processingSpotifySongs domain.ProcessingSpotifySongs
 }
@@ -33,11 +35,12 @@ type App struct {
 func New(AppName string) App {
 	return App{
 		appName: AppName,
+		logger:  logger.InitLogger(),
 	}
 }
 
 // Run - run application
-func (a App) Run(ctx context.Context) {
+func (a *App) Run(ctx context.Context) {
 	a.InitLogger()
 	a.InitErrHandler(ctx)
 	a.InitValidator()
@@ -49,13 +52,13 @@ func (a App) Run(ctx context.Context) {
 }
 
 // InitLogger - inits logger for application
-func (a App) InitLogger() {
+func (a *App) InitLogger() {
 	a.logger = logger.InitLogger()
 	a.logger.InfoFrmt("InitLogger-Successfully")
 }
 
 // InitErrHandler - Inits error Handler channel
-func (a App) InitErrHandler(ctx context.Context) {
+func (a *App) InitErrHandler(ctx context.Context) {
 	a.errChan = ErrChan.InitErrChan(10, a.logger)
 	go func() {
 		for {
@@ -71,17 +74,18 @@ func (a App) InitErrHandler(ctx context.Context) {
 }
 
 // InitValidator Инициализирут  валидатор
-func (a App) InitValidator() {
+func (a *App) InitValidator() {
 	a.validator = validator.New()
 	a.logger.InfoFrmt("initValidator-Successfully")
 }
 
 // PopulateConfig Проверяет конфиг
-func (a App) PopulateConfig() {
+func (a *App) PopulateConfig() {
 	cfg, err := config.ParseConfig("C:\\golang\\src\\MusicApp\\config.json")
 	if err != nil {
 		a.logger.ErrorFrmt("error in parsing config: %s", err)
 	}
+
 	err = cfg.ValidateConfig(a.validator)
 	if err != nil {
 		a.logger.ErrorFrmt("error in config validation: %s", err)
@@ -91,9 +95,9 @@ func (a App) PopulateConfig() {
 }
 
 // InitMongo Инициализируем монго
-func (a App) InitMongo() {
+func (a *App) InitMongo() {
 	var err error
-	a.mongo, err = MongoDB.InitMongo(a.config.MongoDb.Uri, a.config.MongoDb.DataBaseName, a.config.MongoDb.CollectionName)
+	a.mongo, err = MongoDB.InitMongo(a.config.MongoDbCfg.Uri, a.config.MongoDbCfg.DataBaseName, a.config.MongoDbCfg.CollectionName)
 	if err != nil {
 		a.logger.ErrorFrmt("error in initializing MongoDB  client: %s", err)
 	}
@@ -101,9 +105,9 @@ func (a App) InitMongo() {
 }
 
 // InitBot Инициализируем бота
-func (a App) InitBot() {
+func (a *App) InitBot() {
 	botSettings := tg.Settings{
-		Token:  a.config.BotToken.Token,
+		Token:  a.config.BotCfg.Token,
 		Poller: &tg.LongPoller{Timeout: 1 * time.Second},
 	}
 	var err error
@@ -114,12 +118,14 @@ func (a App) InitBot() {
 }
 
 // InitHandlers - инициализирует хендлера
-func (a App) InitHandlers() {
-	a.spotifyHandler = Spotify.New(a.config.SpotifyToken.Token, &a.processingSpotifySongs)
+func (a *App) InitHandlers() {
+	a.spotifyHandler = Spotify.New(a.bot, &a.processingSpotifySongs, a.errChan, &a.config)
+	a.youtubeHandler = YouTube.New()
+	a.telegramHandler = tg_handlers.New(a.bot, a.spotifyHandler, a.youtubeHandler, a.errChan)
 }
 
 // ListenTgBot - todo - отредактировать хендлера под задачи
-func (a App) ListenTgBot() {
+func (a *App) ListenTgBot() {
 	go a.bot.Handle("/SpotifySong", func(msg *tg.Message) {
 		go a.telegramHandler.SpotifySong(msg)
 	})
@@ -138,5 +144,11 @@ func (a App) ListenTgBot() {
 	go a.bot.Handle("/FindSong", func(msg *tg.Message) {
 		go a.telegramHandler.FindSong(msg)
 	})
-
+	a.bot.Handle(tg.OnText, func(msg *tg.Message) {
+		switch {
+		case a.processingSpotifySongs.IfExist(msg.Chat.ID):
+			go a.telegramHandler.SpotifySong(msg)
+		}
+	})
+	a.bot.Start()
 }

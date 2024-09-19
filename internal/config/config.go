@@ -8,18 +8,20 @@ import (
 
 type (
 	Config struct {
-		BotToken     BotConfig     `json:"bot_token"`
-		SpotifyToken SpotifyConfig `json:"spotify_token"`
-		YoutubeToken YoutubeConfig `json:"youtube_token"`
-		MongoDb      MongoDb       `json:"mongodb"`
+		BotCfg     BotConfig     `json:"botCfg"`
+		SpotifyCfg SpotifyConfig `json:"spotifyCfg"`
+		YoutubeCfg YoutubeConfig `json:"youtubeCfg"`
+		MongoDbCfg MongoDb       `json:"mongoDbCfg"`
 	}
 	BotConfig struct {
 		Token string `json:"token"`
 	}
 	SpotifyConfig struct {
-		Token string `json:"token"`
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
 	}
 	YoutubeConfig struct {
+		Token string `json:"token"`
 	}
 	MongoDb struct {
 		Uri            string `json:"Uri"`

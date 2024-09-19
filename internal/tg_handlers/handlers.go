@@ -1,26 +1,34 @@
 package tg_handlers
 
 import (
+	"MusicApp/internal/handlers"
+	"github.com/skwizi4/lib/ErrChan"
 	tg "gopkg.in/tucnak/telebot.v2"
 )
 
 type Handler struct {
+	bot            *tg.Bot
+	spotifyHandler handlers.Spotify
+	youtubeHandler handlers.YouTube
+	errChan        *ErrChan.ErrorChannel
 }
 
-func New() Handler {
-	return Handler{}
+func New(bot *tg.Bot, spotifyHandler handlers.Spotify, youtubeHandler handlers.YouTube, errChan *ErrChan.ErrorChannel) Handler {
+	return Handler{
+		bot:            bot,
+		spotifyHandler: spotifyHandler,
+		youtubeHandler: youtubeHandler,
+		errChan:        errChan,
+	}
 }
 
-// todo - Добавить в основной тгешный хендлер хендлера спотика и ютуба, дописать запрос к ютубу после получения данных
+// todo - Добавить в основной тгешный хендлер хендлера спотифая и ютуба, дописать запрос к ютубу после получения данных
 func (h Handler) SpotifySong(msg *tg.Message) {
-	// SpotifyTrack, err := h.Spotify.GetSongByYoutubeLink()
-	//if err != nil{
-	//	h.ErrChan.HandleError(err)
-	//}
-	// YouTubeMedia, err := h.Youtube.GetSongByMetaData()
-	//if err != nil{
-	//	h.ErrChan.HandleError(err)
-	//}
+	_, err := h.spotifyHandler.GetSongByYoutubeLink(msg)
+	if err != nil {
+		h.errChan.HandleError(err)
+	}
+
 }
 func (h Handler) Help(msg *tg.Message) {
 
