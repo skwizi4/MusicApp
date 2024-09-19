@@ -7,9 +7,14 @@ import (
 const BaseUrl = "https://api.spotify.com"
 
 type ServiceSpotify struct {
-	ApiKey  string
-	BaseUrl string
-	Logger  logger.GoLogger
+	BaseUrl              string
+	Logger               logger.GoLogger
+	ClientId             string
+	ClientSecret         string
+	Token                string
+	SpotifyResponseToken struct {
+		AccessToken string `json:"access_token"`
+	}
 }
 
 // spotifyTrackById, spotifyPlaylistById Структуры для работы с api

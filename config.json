@@ -1,1 +1,18 @@
- todo - заполнить
+{
+
+  "botCfg": {
+  "token": "7037936919:AAHOtvl8Y6ubJdS_htZgu5c2jDl55JS8Skw"
+},
+  "spotifyCfg": {
+    "client_id": "daa370c326574138828a80bfec66f202",
+    "client_secret" : "22da8f808c3e46728f0c32daa2c62df5"
+  },
+  "youtubeCfg": {
+  "token": "your-youtube-token-here"
+},
+"mongoDbCfg": {
+  "Uri": "mongodb://localhost:27017/",
+  "DataBaseName": "Tg-Music-App",
+  "collection_name": "users_tokens"
+}
+}

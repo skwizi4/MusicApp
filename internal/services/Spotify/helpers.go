@@ -2,27 +2,25 @@ package Spotify
 
 import (
 	"MusicApp/internal/domain"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
-func (s ServiceSpotify) CreateApiKey() {
-	//todo Create method that give s.ApiKey needed value
-	s.ApiKey = ""
-}
 func (s ServiceSpotify) CreateRequest(method, endpoint string) (*http.Request, error) {
-	url := s.BaseUrl + endpoint
+	Url := s.BaseUrl + endpoint
 
-	req, err := http.NewRequest(method, url, nil)
+	req, err := http.NewRequest(method, Url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Add("Authorization", "Bearer "+s.ApiKey)
+	req.Header.Add("Authorization", "Bearer "+s.Token)
 	return req, nil
 }
 func (s ServiceSpotify) doRequest(req *http.Request) (*http.Response, error) {
@@ -32,12 +30,6 @@ func (s ServiceSpotify) doRequest(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return &http.Response{}, err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
-		}
-	}(resp.Body)
 
 	// Проверяем статус ответа
 	if resp.StatusCode != http.StatusOK {
@@ -101,4 +93,59 @@ func ParsePlaylistIDFromURL(link string) (string, error) {
 		return strings.Split(id, "?")[0], nil
 	}
 	return "", errors.New("can't parse ID")
+}
+
+func (s *ServiceSpotify) RequestToken() error {
+	tokenData := url.Values{}
+	tokenData.Set("grant_type", "client_credentials")
+
+	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", strings.NewReader(tokenData.Encode()))
+	if err != nil {
+		s.Logger.ErrorFrmt("failed to create request: ", err)
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	authHeader := base64.StdEncoding.EncodeToString([]byte(s.ClientId + ":" + s.ClientSecret))
+	req.Header.Add("Authorization", "Basic "+authHeader)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		s.Logger.ErrorFrmt("failed to execute request: ", err)
+		return fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		s.Logger.ErrorFrmt("unexpected status code: ", resp.StatusCode)
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		s.Logger.ErrorFrmt("failed to read response body: ", err)
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var tokenResponse map[string]interface{}
+	if err := json.Unmarshal(body, &tokenResponse); err != nil {
+		s.Logger.ErrorFrmt("failed to unmarshal response: ", err)
+		return fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	token, ok := tokenResponse["access_token"].(string)
+	if !ok {
+		s.Logger.Error("access_token not found in response")
+		return fmt.Errorf("access_token not found in response")
+	}
+
+	s.Token = token
+	s.Logger.Info("Token successfully retrieved")
+
+	return nil
 }

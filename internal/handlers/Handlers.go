@@ -9,7 +9,7 @@ import (
 
 type (
 	Spotify interface {
-		GetSongByYoutubeLink(msg tg.Message) (*domain.Song, error)
+		GetSongByYoutubeLink(msg *tg.Message) (*domain.Song, error)
 		GetSongByMetaData(metadata domain.MetaData) (*domain.Song, error)
 		GetPlaylistByYoutubeLink(youtubeLink string) (*domain.Playlist, error)
 		GetPlaylistByMetaData(metadata domain.MetaData) (*domain.Playlist, error)

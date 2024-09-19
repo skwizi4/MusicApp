@@ -5,28 +5,33 @@ import (
 	"MusicApp/internal/domain"
 	"MusicApp/internal/services"
 	"MusicApp/internal/services/Spotify"
+	"fmt"
 	"github.com/skwizi4/lib/ErrChan"
 	tg "gopkg.in/tucnak/telebot.v2"
 )
 
 type Handler struct {
-	bot                    tg.Bot
+	bot                    *tg.Bot
 	processingSpotifySongs *domain.ProcessingSpotifySongs
 	errChannel             *ErrChan.ErrorChannel
 	spotifyService         services.SpotifyService
-	cfg                    config.Config
+	cfg                    *config.Config
 }
 
-func New(token string, processingSpotifySongs *domain.ProcessingSpotifySongs,
+func New(bot *tg.Bot, processingSpotifySongs *domain.ProcessingSpotifySongs, errChan *ErrChan.ErrorChannel, cfg *config.Config,
 ) Handler {
 	return Handler{
-		spotifyService:         Spotify.NewSpotifyService(token),
+		bot:                    bot,
+		spotifyService:         Spotify.NewSpotifyService(cfg),
 		processingSpotifySongs: processingSpotifySongs,
+		errChannel:             errChan,
+		cfg:                    cfg,
 	}
 }
 
-func (h Handler) GetSongByYoutubeLink(msg tg.Message) (*domain.Song, error) {
+func (h Handler) GetSongByYoutubeLink(msg *tg.Message) (*domain.Song, error) {
 	process := h.processingSpotifySongs.GetOrCreate(msg.Chat.ID)
+
 	switch process.Step {
 	case domain.ProcessSpotifySongStart:
 		if _, err := h.bot.Send(msg.Sender, "Send link of song that you wanna find"); err != nil {
@@ -48,8 +53,10 @@ func (h Handler) GetSongByYoutubeLink(msg tg.Message) (*domain.Song, error) {
 			h.errChannel.HandleError(err)
 			return nil, err
 		}
-		//todo - пересмотреть логику добавления песни к состоянию пользователя
-		if err = h.processingSpotifySongs.AddSong(track, msg.Chat.ID); err != nil {
+
+		fmt.Println(track)
+		//todo - fix error - tg: unsupported what argument (track)
+		if _, err = h.bot.Send(msg.Sender, track); err != nil {
 			h.errChannel.HandleError(err)
 			return nil, err
 		}
