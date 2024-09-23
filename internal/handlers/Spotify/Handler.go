@@ -15,10 +15,10 @@ type Handler struct {
 	processingSpotifySongs *domain.ProcessingSpotifySongs
 	errChannel             *ErrChan.ErrorChannel
 	spotifyService         services.SpotifyService
-	cfg                    *config.Config
+	cfg                    config.Config
 }
 
-func New(bot *tg.Bot, processingSpotifySongs *domain.ProcessingSpotifySongs, errChan *ErrChan.ErrorChannel, cfg *config.Config,
+func New(bot *tg.Bot, processingSpotifySongs *domain.ProcessingSpotifySongs, errChan *ErrChan.ErrorChannel, cfg config.Config,
 ) Handler {
 	return Handler{
 		bot:                    bot,
@@ -48,7 +48,7 @@ func (h Handler) GetSongByYoutubeLink(msg *tg.Message) (*domain.Song, error) {
 			return nil, err
 		}
 	case domain.ProcessSpotifySongEnd:
-		track, err := h.spotifyService.TrackById(msg.Text)
+		track, err := h.spotifyService.GetSpotifyTrackById(msg.Text)
 		if err != nil {
 			h.errChannel.HandleError(err)
 			return nil, err
