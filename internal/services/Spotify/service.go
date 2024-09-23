@@ -3,12 +3,13 @@ package Spotify
 import (
 	"MusicApp/internal/config"
 	"MusicApp/internal/domain"
+	"errors"
 	logger "github.com/skwizi4/lib/logs"
 	"net/http"
 	"net/url"
 )
 
-func NewSpotifyService(cfg *config.Config) ServiceSpotify {
+func NewSpotifyService(cfg config.Config) ServiceSpotify {
 	return ServiceSpotify{
 		BaseUrl:      BaseUrl,
 		ClientId:     cfg.SpotifyCfg.ClientID,
@@ -17,8 +18,11 @@ func NewSpotifyService(cfg *config.Config) ServiceSpotify {
 	}
 }
 
-func (s ServiceSpotify) TrackById(link string) (domain.Song, error) {
-	id, err := ParseTrackIDFromURL(link)
+func (s ServiceSpotify) GetSpotifyTrackById(link string) (domain.Song, error) {
+	isTrack, id, err := ParseSpotifyIDFromURL(link)
+	if isTrack == "playlist" {
+		return domain.Song{}, errors.New("invalid link, its link of playlist")
+	}
 	if err != nil {
 		return domain.Song{}, err
 	}
@@ -43,8 +47,11 @@ func (s ServiceSpotify) TrackById(link string) (domain.Song, error) {
 	return Track, nil
 
 }
-func (s ServiceSpotify) PlaylistById(link string) (domain.Playlist, error) {
-	id, err := ParsePlaylistIDFromURL(link)
+func (s ServiceSpotify) GetSpotifyPlaylistById(link string) (domain.Playlist, error) {
+	isPlaylist, id, err := ParseSpotifyIDFromURL(link)
+	if isPlaylist == "track" {
+		return domain.Playlist{}, errors.New("invalid link, its link of track")
+	}
 	if err != nil {
 		return domain.Playlist{}, err
 	}
@@ -63,8 +70,8 @@ func (s ServiceSpotify) PlaylistById(link string) (domain.Playlist, error) {
 	return Playlist, nil
 
 }
-func (s ServiceSpotify) TrackByName(trackName, artist string) (domain.Song, error) {
-	req, err := s.CreateRequest(http.MethodGet, "/v1/search?q=track:"+url.QueryEscape(trackName)+"+artist:"+url.QueryEscape(artist)+"&type=track&limit=10&offset=5")
+func (s ServiceSpotify) GetSpotifyTrackByName(data domain.MetaData) (domain.Song, error) {
+	req, err := s.CreateRequest(http.MethodGet, "/v1/search?q=track:"+url.QueryEscape(data.Title)+"+artist:"+url.QueryEscape(data.Artist)+"&type=track&limit=10&offset=5")
 	if err != nil {
 		return domain.Song{}, err
 	}

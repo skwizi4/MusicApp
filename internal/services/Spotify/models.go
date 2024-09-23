@@ -17,7 +17,7 @@ type ServiceSpotify struct {
 	}
 }
 
-// spotifyTrackById, spotifyPlaylistById Структуры для работы с api
+// spotifyTrackById, spotifyPlaylistById, spotifySongByName Структуры для работы с api
 type (
 	spotifyTrackById struct {
 		ID      string `json:"id"`

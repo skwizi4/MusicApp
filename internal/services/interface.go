@@ -4,13 +4,13 @@ import "MusicApp/internal/domain"
 
 type (
 	SpotifyService interface {
-		TrackById(link string) (domain.Song, error)
-		PlaylistById(link string) (domain.Playlist, error)
-		TrackByName(trackName, artist string) (domain.Song, error)
+		GetSpotifyTrackById(link string) (domain.Song, error)
+		GetSpotifyPlaylistById(link string) (domain.Playlist, error)
+		GetSpotifyTrackByName(data domain.MetaData) (domain.Song, error)
 	}
 	YouTubeService interface {
-		GetYoutubeSongByID(songID string) (*domain.Song, error)
-		GetYoutubePlaylist(playlistID string) (*domain.Playlist, error)
-		FindMusicByMetadata(data domain.MetaData) (*domain.Song, error)
+		GetYoutubeMediaByID(link string) (*domain.Song, error)
+		GetYoutubePlaylistByID(link string) (*domain.Playlist, error)
+		GetMediaByMetadata(data domain.MetaData) (*domain.Song, error)
 	}
 )

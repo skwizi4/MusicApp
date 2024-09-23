@@ -51,11 +51,12 @@ type Song struct {
 	Artist string
 	Album  string
 	Genre  string
+	Link   string
 }
 
 type MetaData struct {
-	title  string
-	artist string
+	Title  string
+	Artist string
 }
 type Playlist struct {
 	Songs       []Song

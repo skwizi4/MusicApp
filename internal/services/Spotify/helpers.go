@@ -80,19 +80,16 @@ func (s ServiceSpotify) decodeRespTrackByName(response *http.Response) (domain.S
 		Album:  track.Tracks.Items[0].Album.Name,
 	}, nil
 }
-func ParseTrackIDFromURL(link string) (string, error) {
+func ParseSpotifyIDFromURL(link string) (string, string, error) {
 	if strings.Contains(link, "https://open.spotify.com/track/") {
 		id := strings.Split(link, "https://open.spotify.com/track/")[1]
-		return strings.Split(id, "?")[0], nil
+		return "track", strings.Split(id, "?")[0], nil
 	}
-	return "", errors.New("can't parse ID")
-}
-func ParsePlaylistIDFromURL(link string) (string, error) {
 	if strings.Contains(link, "https://open.spotify.com/playlist/") {
 		id := strings.Split(link, "https://open.spotify.com/playlist/")[1]
-		return strings.Split(id, "?")[0], nil
+		return "playlist", strings.Split(id, "?")[0], nil
 	}
-	return "", errors.New("can't parse ID")
+	return "", "", errors.New("can't parse ID, invalid URL format")
 }
 
 func (s *ServiceSpotify) RequestToken() error {
@@ -145,7 +142,7 @@ func (s *ServiceSpotify) RequestToken() error {
 	}
 
 	s.Token = token
-	s.Logger.Info("Token successfully retrieved")
+	s.Logger.Info("Key successfully retrieved")
 
 	return nil
 }
