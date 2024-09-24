@@ -20,7 +20,7 @@ import (
 type App struct {
 	appName                string
 	bot                    *tg.Bot
-	config                 config.Config
+	Config                 config.Config
 	errChan                *ErrChan.ErrorChannel
 	logger                 logger.GoLogger
 	validator              *validator.Validate
@@ -90,14 +90,14 @@ func (a *App) PopulateConfig() {
 	if err != nil {
 		a.logger.ErrorFrmt("error in config validation: %s", err)
 	}
-	a.config = *cfg
+	a.Config = *cfg
 	a.logger.InfoFrmt("InitConfig-Successfully")
 }
 
 // InitMongo Инициализируем монго
 func (a *App) InitMongo() {
 	var err error
-	a.mongo, err = MongoDB.InitMongo(a.config.MongoDbCfg.Uri, a.config.MongoDbCfg.DataBaseName, a.config.MongoDbCfg.CollectionName)
+	a.mongo, err = MongoDB.InitMongo(a.Config.MongoDbCfg.Uri, a.Config.MongoDbCfg.DataBaseName, a.Config.MongoDbCfg.CollectionName)
 	if err != nil {
 		a.logger.ErrorFrmt("error in initializing MongoDB  client: %s", err)
 	}
@@ -107,7 +107,7 @@ func (a *App) InitMongo() {
 // InitBot Инициализируем бота
 func (a *App) InitBot() {
 	botSettings := tg.Settings{
-		Token:  a.config.BotCfg.Token,
+		Token:  a.Config.BotCfg.Token,
 		Poller: &tg.LongPoller{Timeout: 1 * time.Second},
 	}
 	var err error
@@ -119,7 +119,7 @@ func (a *App) InitBot() {
 
 // InitHandlers - инициализирует хендлера
 func (a *App) InitHandlers() {
-	a.spotifyHandler = Spotify.New(a.bot, &a.processingSpotifySongs, a.errChan, &a.config)
+	a.spotifyHandler = Spotify.New(a.bot, &a.processingSpotifySongs, a.errChan, a.Config)
 	a.youtubeHandler = YouTube.New()
 	a.telegramHandler = tg_handlers.New(a.bot, a.spotifyHandler, a.youtubeHandler, a.errChan)
 }

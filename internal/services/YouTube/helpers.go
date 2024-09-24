@@ -1,10 +1,10 @@
 package YouTube
 
 import (
+	"MusicApp/internal/domain"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 )
@@ -29,39 +29,49 @@ func (y ServiceYouTube) CreateRequest(method, endpoint string) (*http.Request, e
 	// Func with token//
 	return req, nil
 }
+
+// DoRequest todo fix bugs
 func (y ServiceYouTube) DoRequest(req *http.Request) (*http.Response, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
+	fmt.Println(resp.Body)
 	if resp.StatusCode != 200 {
 		return resp, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 	return resp, nil
 }
-func (y ServiceYouTube) CreateEndpoint(id string) (string, error) {
+func (y ServiceYouTube) CreateEndpointYoutubeMedia(id string) (string, error) {
 	if y.Key == "" {
 		return "", errors.New("YouTube key is empty")
 	}
-	url := fmt.Sprintf("https://www.googleapis.com/youtube/v3/videos?id=%s&part=snippet,statistics&key=%s", id, y.Key)
+	url := fmt.Sprintf("videos?id=%s&key=%s&part=snippet,status", id, y.Key)
 	return url, nil
 }
-func DecodedBody(resp *http.Response, ResponseStruct interface{}) error {
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
-		}
-	}(resp.Body)
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
+func (y ServiceYouTube) CreateEndpointYoutubePlaylist(id string) (string, error) {
+	if y.Key == "" {
+		return "", errors.New("YouTube key is empty")
 	}
-	err = json.Unmarshal(body, &ResponseStruct)
-	if err != nil {
-		return err
-	}
+	url := fmt.Sprintf("playlists?id=%s&key=%s&part=snippet,status", id, y.Key)
+	return url, nil
+}
 
-	return nil
+func DecodeRespMediaById(resp *http.Response) (*domain.Song, error) {
+	var Media youtubeMediaById
+	if err := json.NewDecoder(resp.Body).Decode(&Media); err != nil {
+		return nil, errors.New("can't decode response")
+	}
+	return &domain.Song{
+		Title:  Media.Items[0].Snippet.Title,
+		Artist: Media.Items[0].Snippet.ChanelName,
+	}, nil
+}
+func DecodeRespPlaylistById(resp *http.Response) (*domain.Playlist, error) {
+	var Playlist youtubePlaylistById
+	if err := json.NewDecoder(resp.Body).Decode(&Playlist); err != nil {
+		return &domain.Playlist{}, errors.New("can't decode response")
+	}
+	return nil, nil
 }
