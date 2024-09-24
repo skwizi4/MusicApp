@@ -18,72 +18,75 @@ func NewSpotifyService(cfg config.Config) ServiceSpotify {
 	}
 }
 
-func (s ServiceSpotify) GetSpotifyTrackById(link string) (domain.Song, error) {
+func (s ServiceSpotify) GetSpotifyTrackById(link string) (*domain.Song, error) {
 	isTrack, id, err := ParseSpotifyIDFromURL(link)
 	if isTrack == "playlist" {
-		return domain.Song{}, errors.New("invalid link, its link of playlist")
+		return nil, errors.New("invalid link, its link of playlist")
 	}
 	if err != nil {
-		return domain.Song{}, err
+		return nil, err
 	}
 	if err = s.RequestToken(); err != nil {
-		return domain.Song{}, err
+		return nil, err
 	}
 	req, err := s.CreateRequest(http.MethodGet, "/v1/tracks/"+id)
 	if err != nil {
-		return domain.Song{}, err
+		return nil, err
 	}
 	resp, err := s.doRequest(req)
 	if err != nil {
-		return domain.Song{}, err
+		return nil, err
 	}
 
 	Track, err := s.decodeRespTrackById(resp)
 
 	if err != nil {
-		return domain.Song{}, err
+		return nil, err
 	}
 
 	return Track, nil
 
 }
-func (s ServiceSpotify) GetSpotifyPlaylistById(link string) (domain.Playlist, error) {
+func (s ServiceSpotify) GetSpotifyPlaylistById(link string) (*domain.Playlist, error) {
 	isPlaylist, id, err := ParseSpotifyIDFromURL(link)
 	if isPlaylist == "track" {
-		return domain.Playlist{}, errors.New("invalid link, its link of track")
+		return nil, errors.New("invalid link, its link of track")
 	}
 	if err != nil {
-		return domain.Playlist{}, err
+		return nil, err
 	}
 	req, err := s.CreateRequest(http.MethodGet, "/v1/playlists/"+id)
 	if err != nil {
-		return domain.Playlist{}, err
+		return nil, err
 	}
 	resp, err := s.doRequest(req)
 	if err != nil {
-		return domain.Playlist{}, err
+		return nil, err
 	}
 	Playlist, err := s.decodeRespPlaylistId(resp)
 	if err != nil {
-		return domain.Playlist{}, err
+		return nil, err
 	}
 	return Playlist, nil
 
 }
-func (s ServiceSpotify) GetSpotifyTrackByName(data domain.MetaData) (domain.Song, error) {
+func (s ServiceSpotify) GetSpotifyTrackByMetadata(data domain.MetaData) (*domain.Song, error) {
 	req, err := s.CreateRequest(http.MethodGet, "/v1/search?q=track:"+url.QueryEscape(data.Title)+"+artist:"+url.QueryEscape(data.Artist)+"&type=track&limit=10&offset=5")
 	if err != nil {
-		return domain.Song{}, err
+		return nil, err
 	}
 	resp, err := s.doRequest(req)
 	if err != nil {
-		return domain.Song{}, err
+		return nil, err
 	}
 	Song, err := s.decodeRespTrackByName(resp)
 	if err != nil {
-		return domain.Song{}, err
+		return nil, err
 	}
 
 	return Song, nil
 
+}
+func (s ServiceSpotify) FillSpotifyPlaylist(playlist domain.Playlist) (*domain.Playlist, error) {
+	return nil, nil
 }

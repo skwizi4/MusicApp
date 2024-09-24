@@ -8,6 +8,7 @@ type ServiceYouTube struct {
 	Key     string
 	BaseUrl string
 	logger  logger.GoLogger
+	Token   string
 }
 
 type (

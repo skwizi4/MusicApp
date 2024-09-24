@@ -5,7 +5,6 @@ import (
 	"MusicApp/internal/domain"
 	"errors"
 	logger "github.com/skwizi4/lib/logs"
-
 	"net/http"
 )
 
@@ -17,6 +16,7 @@ func New(cfg config.Config) ServiceYouTube {
 	}
 }
 
+// GetYoutubeMediaByID Tested
 func (y ServiceYouTube) GetYoutubeMediaByID(link string) (*domain.Song, error) {
 	isTrack, id, err := ParseYouTubeIDFromURL(link)
 	if isTrack == "playlist" {
@@ -25,7 +25,7 @@ func (y ServiceYouTube) GetYoutubeMediaByID(link string) (*domain.Song, error) {
 	if err != nil {
 		return &domain.Song{}, err
 	}
-	endpoint, err := y.CreateEndpoint(id)
+	endpoint, err := y.CreateEndpointYoutubeMedia(id)
 	if err != nil {
 		return &domain.Song{}, err
 	}
@@ -37,26 +37,24 @@ func (y ServiceYouTube) GetYoutubeMediaByID(link string) (*domain.Song, error) {
 	if err != nil {
 		return &domain.Song{}, err
 	}
-	var MediaByIdStruct youtubeMediaById
-	err = DecodedBody(resp, &MediaByIdStruct)
+	song, err := DecodeRespMediaById(resp)
 	if err != nil {
 		return &domain.Song{}, err
 	}
-
-	return &domain.Song{
-		Title:  MediaByIdStruct.Items[0].Snippet.Title,
-		Artist: MediaByIdStruct.Items[0].Snippet.ChanelName,
-	}, nil
+	song.Link = link
+	return song, nil
 }
+
+// GetYoutubePlaylistByID todo write tests + fix bugs
 func (y ServiceYouTube) GetYoutubePlaylistByID(link string) (*domain.Playlist, error) {
 	isPlaylist, id, err := ParseYouTubeIDFromURL(link)
-	if isPlaylist == "playlist" {
+	if isPlaylist == "track" {
 		return &domain.Playlist{}, errors.New("invalid link, its track link")
 	}
 	if err != nil {
 		return &domain.Playlist{}, err
 	}
-	endpoint, err := y.CreateEndpoint(id)
+	endpoint, err := y.CreateEndpointYoutubePlaylist(id)
 	if err != nil {
 		return &domain.Playlist{}, err
 	}
@@ -68,21 +66,21 @@ func (y ServiceYouTube) GetYoutubePlaylistByID(link string) (*domain.Playlist, e
 	if err != nil {
 		return &domain.Playlist{}, err
 	}
-	var MediaByIdStruct youtubePlaylistById
-	err = DecodedBody(resp, &MediaByIdStruct)
+	//body, err := io.ReadAll(resp.Body)
+	//if err != nil {
+	//	return &domain.Playlist{}, err
+	//}
+	//fmt.Println(string(body))
+	playlist, err := DecodeRespPlaylistById(resp)
 	if err != nil {
 		return &domain.Playlist{}, err
 	}
-	playlist := &domain.Playlist{
-		Title: "", /*todo Create structure for youtube playlist */
-	}
-	//todo create filling playlist
 	return playlist, nil
 }
 
-//todo Complete finding media by metadata for playlist/ future fitch
+//todo Complete finding media by metadata for playlist/ future fitch + write tests
 
-func (y ServiceYouTube) GetMediaByMetadata(data domain.MetaData) (*domain.Song, error) {
+func (y ServiceYouTube) GetYoutubeMediaByMetadata(data domain.MetaData) (*domain.Song, error) {
 	return &domain.Song{}, nil
 }
 

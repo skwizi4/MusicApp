@@ -37,22 +37,22 @@ func (s ServiceSpotify) doRequest(req *http.Request) (*http.Response, error) {
 	}
 	return resp, nil
 }
-func (s ServiceSpotify) decodeRespTrackById(response *http.Response) (domain.Song, error) {
+func (s ServiceSpotify) decodeRespTrackById(response *http.Response) (*domain.Song, error) {
 	var track spotifyTrackById
 	if err := json.NewDecoder(response.Body).Decode(&track); err != nil {
-		return domain.Song{}, err
+		return nil, err
 	}
 
-	return domain.Song{
+	return &domain.Song{
 		Title:  track.Name,
 		Artist: track.Artists[0].Name,
 		Album:  track.Album.Name,
 	}, nil
 }
-func (s ServiceSpotify) decodeRespPlaylistId(response *http.Response) (domain.Playlist, error) {
+func (s ServiceSpotify) decodeRespPlaylistId(response *http.Response) (*domain.Playlist, error) {
 	var playlist spotifyPlaylistById
 	if err := json.NewDecoder(response.Body).Decode(&playlist); err != nil {
-		return domain.Playlist{}, err
+		return nil, err
 	}
 	var p domain.Playlist
 	p.Title = playlist.Name
@@ -66,15 +66,15 @@ func (s ServiceSpotify) decodeRespPlaylistId(response *http.Response) (domain.Pl
 			Album:  song.Track.Album.Name,
 		}
 	}
-	return p, nil
+	return &p, nil
 }
-func (s ServiceSpotify) decodeRespTrackByName(response *http.Response) (domain.Song, error) {
+func (s ServiceSpotify) decodeRespTrackByName(response *http.Response) (*domain.Song, error) {
 	var track spotifySongByName
 	if err := json.NewDecoder(response.Body).Decode(&track); err != nil {
-		return domain.Song{}, err
+		return nil, err
 	}
 
-	return domain.Song{
+	return &domain.Song{
 		Title:  track.Tracks.Items[0].Name,
 		Artist: track.Tracks.Items[0].Artists[0].Name,
 		Album:  track.Tracks.Items[0].Album.Name,
