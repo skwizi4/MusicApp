@@ -13,6 +13,6 @@ type (
 		GetYoutubeMediaByID(link string) (*domain.Song, error)
 		GetYoutubePlaylistByID(link string) (*domain.Playlist, error)
 		GetYoutubeMediaByMetadata(data domain.MetaData) (*domain.Song, error)
-		FillYoutubePlaylist(playlist domain.Playlist) (*domain.Playlist, error)
+		CreateYoutubePlaylist(playlist domain.Playlist, token string) (*domain.Playlist, error)
 	}
 )

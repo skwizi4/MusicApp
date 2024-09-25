@@ -4,6 +4,7 @@ import (
 	"MusicApp/internal/config"
 	"MusicApp/internal/domain"
 	"errors"
+	"fmt"
 	logger "github.com/skwizi4/lib/logs"
 	"net/http"
 )
@@ -16,78 +17,103 @@ func New(cfg config.Config) ServiceYouTube {
 	}
 }
 
-// GetYoutubeMediaByID Tested
+// GetYoutubeMediaByID Tested - OK
 func (y ServiceYouTube) GetYoutubeMediaByID(link string) (*domain.Song, error) {
+	song := &domain.Song{}
 	isTrack, id, err := ParseYouTubeIDFromURL(link)
 	if isTrack == "playlist" {
-		return &domain.Song{}, errors.New("invalid link, its playlist link")
+		return song, errors.New("invalid link, its playlist link")
 	}
 	if err != nil {
-		return &domain.Song{}, err
+		return song, err
 	}
-	endpoint, err := y.CreateEndpointYoutubeMedia(id)
+	endpoint, err := y.CreateEndpointYoutubeMediaById(id)
 	if err != nil {
-		return &domain.Song{}, err
+		return song, err
 	}
-	req, err := y.CreateRequest(http.MethodGet, endpoint)
+	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint)
 	if err != nil {
-		return &domain.Song{}, err
+		return song, err
 	}
-	resp, err := y.DoRequest(req)
+	song, err = DecodeRespMediaById(resp)
 	if err != nil {
-		return &domain.Song{}, err
+		return song, err
 	}
-	song, err := DecodeRespMediaById(resp)
-	if err != nil {
-		return &domain.Song{}, err
-	}
-	song.Link = link
+
 	return song, nil
 }
 
-// GetYoutubePlaylistByID todo write tests + fix bugs
+// GetYoutubePlaylistByID - OK
 func (y ServiceYouTube) GetYoutubePlaylistByID(link string) (*domain.Playlist, error) {
+	var playlist = &domain.Playlist{}
 	isPlaylist, id, err := ParseYouTubeIDFromURL(link)
-	if isPlaylist == "track" {
-		return &domain.Playlist{}, errors.New("invalid link, its track link")
+	if isPlaylist == "track" || err != nil {
+		return playlist, errors.New("invalid link, its track link")
 	}
+	// Fill playlist params
+	endpoint, err := y.CreateEndpointYoutubePlaylistParams(id)
 	if err != nil {
-		return &domain.Playlist{}, err
+		return playlist, err
 	}
-	endpoint, err := y.CreateEndpointYoutubePlaylist(id)
+	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint)
 	if err != nil {
-		return &domain.Playlist{}, err
+		return playlist, err
 	}
-	req, err := y.CreateRequest(http.MethodGet, endpoint)
+
+	err = FillPlaylistParams(resp, playlist)
 	if err != nil {
-		return &domain.Playlist{}, err
+		return playlist, err
 	}
-	resp, err := y.DoRequest(req)
+
+	// fill Playlist media
+	endpoint, err = y.CreateEndpointYoutubePlaylistSongs(id)
 	if err != nil {
-		return &domain.Playlist{}, err
+		return playlist, err
 	}
-	//body, err := io.ReadAll(resp.Body)
-	//if err != nil {
-	//	return &domain.Playlist{}, err
-	//}
-	//fmt.Println(string(body))
-	playlist, err := DecodeRespPlaylistById(resp)
+	resp, err = y.createAndExecuteRequest(http.MethodGet, endpoint)
 	if err != nil {
-		return &domain.Playlist{}, err
+		return playlist, err
+	}
+	playlist, err = FillPlaylist(resp, playlist)
+	if err != nil {
+		return playlist, err
 	}
 	return playlist, nil
 }
 
-//todo Complete finding media by metadata for playlist/ future fitch + write tests
-
+// GetYoutubeMediaByMetadata - OK
 func (y ServiceYouTube) GetYoutubeMediaByMetadata(data domain.MetaData) (*domain.Song, error) {
-	return &domain.Song{}, nil
+	song := &domain.Song{}
+	endpoint, err := y.CreateEndpointYoutubeMediaByMetadata(data)
+	if err != nil {
+		return song, err
+	}
+	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint)
+	if err != nil {
+		return song, err
+	}
+	song, err = DecodeRespMediaByMetadata(resp)
+	if err != nil {
+		return song, err
+	}
+	return song, nil
 }
 
-// todo Complete creating playlist and returning playlist structure
+// todo Test last method of service in prod
 
-func (y ServiceYouTube) FillYoutubePlaylist(list domain.Playlist) (*domain.Playlist, error) {
-	return &domain.Playlist{
-		ExternalUrl: "",
-	}, nil
+func (y ServiceYouTube) CreateYoutubePlaylist(SpotifyPlaylist domain.Playlist, token string) (*domain.Playlist, error) {
+	id, err := y.CreatePlaylist(token, SpotifyPlaylist.Title)
+	if err != nil {
+		return nil, err
+	}
+	YoutubePlaylist, err := y.FillYoutubePlaylist(token, id, SpotifyPlaylist.Songs)
+	if err != nil {
+		return nil, err
+	}
+	YoutubePlaylist.Owner = SpotifyPlaylist.Owner
+	YoutubePlaylist.Title = SpotifyPlaylist.Title
+	YoutubePlaylist.Description = "Playlist Created by tg-bot"
+	YoutubePlaylist.ExternalUrl = fmt.Sprintf("https://youtube.com/playlist?list=%s", id)
+
+	return YoutubePlaylist, nil
 }
