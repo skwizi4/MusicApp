@@ -2,11 +2,13 @@ package YouTube
 
 import (
 	"MusicApp/internal/app"
+	"MusicApp/internal/domain"
 	"fmt"
 	"testing"
 )
 
-func TestGetMediaById(t *testing.T) {
+// TestServiceYouTube_GetYoutubeMediaByID -  OK
+func TestServiceYouTube_GetYoutubeMediaByID(t *testing.T) {
 	a := app.New("test")
 	a.InitValidator()
 	a.PopulateConfig()
@@ -15,13 +17,14 @@ func TestGetMediaById(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	youtubeService.logger.InfoFrmt("NameOfSong: ", song.Title)
-	youtubeService.logger.InfoFrmt("ArtistName: ", song.Artist)
-	youtubeService.logger.InfoFrmt("AlbumName: ", song.Album)
-	youtubeService.logger.InfoFrmt("Link ", song.Link)
+	fmt.Println("NameOfSong: ", song.Title)
+	fmt.Println("ArtistName: ", song.Artist)
+	fmt.Println("Link ", song.Link)
 
 }
-func TestGetPlaylistById(t *testing.T) {
+
+// TestServiceYouTube_GetYoutubePlaylistByID - OK
+func TestServiceYouTube_GetYoutubePlaylistByID(t *testing.T) {
 	a := app.New("test")
 	a.InitValidator()
 	a.PopulateConfig()
@@ -30,5 +33,23 @@ func TestGetPlaylistById(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(playlist)
+	fmt.Println("Playlist title:", playlist.Title, "\n Playlist Owner: ", playlist.Owner)
+	for _, song := range playlist.Songs {
+		fmt.Println("Song Title:", song.Title)
+		fmt.Println("Song Artist:", song.Artist)
+	}
 }
+
+// TestServiceYouTube_GetYoutubeMediaByMetadata - OK
+func TestServiceYouTube_GetYoutubeMediaByMetadata(t *testing.T) {
+	a := app.New("test")
+	a.InitValidator()
+	a.PopulateConfig()
+	youtubeService := New(a.Config)
+	song, err := youtubeService.GetYoutubeMediaByMetadata(domain.MetaData{Title: "close eyes ", Artist: "dvrst"})
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println("Song Title:", song.Title, "\n Artist:", song.Artist, "\n SongId:", song.Link)
+}
+func TestServiceYouTube_FillYoutubePlaylist(t *testing.T) {}
