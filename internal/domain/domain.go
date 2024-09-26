@@ -59,11 +59,12 @@ type MetaData struct {
 	Artist string
 }
 type Playlist struct {
-	Songs       []Song
-	Title       string
-	Owner       string
-	Description string
-	ExternalUrl string
+	Songs         []Song
+	Title         string
+	Owner         string
+	Description   string
+	ExternalUrl   string
+	NextPageToken string
 }
 
 // ProcessSpotifySong - Structure of handler "spotifyHandler";

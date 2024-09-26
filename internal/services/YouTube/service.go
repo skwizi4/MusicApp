@@ -3,30 +3,31 @@ package YouTube
 import (
 	"MusicApp/internal/config"
 	"MusicApp/internal/domain"
-	"errors"
 	"fmt"
 	logger "github.com/skwizi4/lib/logs"
 	"net/http"
 )
 
+//todo Refactor
+
 func New(cfg config.Config) ServiceYouTube {
 	return ServiceYouTube{
-		BaseUrl: BaseUrl,
-		logger:  logger.InitLogger(),
-		Key:     cfg.YoutubeCfg.Key,
+		BaseUrl:   BaseUrl,
+		logger:    logger.InitLogger(),
+		Key:       cfg.YoutubeCfg.Key,
+		ClientID:  cfg.YoutubeCfg.ClientID,
+		ServerUrl: ServerUrl,
 	}
 }
 
-// GetYoutubeMediaByID Tested - OK
+// GetYoutubeMediaByID Tested - Tested(OK)
 func (y ServiceYouTube) GetYoutubeMediaByID(link string) (*domain.Song, error) {
 	song := &domain.Song{}
-	isTrack, id, err := ParseYouTubeIDFromURL(link)
-	if isTrack == "playlist" {
-		return song, errors.New("invalid link, its playlist link")
-	}
+	id, err := GetID(link)
 	if err != nil {
 		return song, err
 	}
+
 	endpoint, err := y.CreateEndpointYoutubeMediaById(id)
 	if err != nil {
 		return song, err
@@ -43,12 +44,12 @@ func (y ServiceYouTube) GetYoutubeMediaByID(link string) (*domain.Song, error) {
 	return song, nil
 }
 
-// GetYoutubePlaylistByID - OK
+// GetYoutubePlaylistByID - Tested(OK)
 func (y ServiceYouTube) GetYoutubePlaylistByID(link string) (*domain.Playlist, error) {
 	var playlist = &domain.Playlist{}
-	isPlaylist, id, err := ParseYouTubeIDFromURL(link)
-	if isPlaylist == "track" || err != nil {
-		return playlist, errors.New("invalid link, its track link")
+	id, err := GetID(link)
+	if err != nil {
+		return playlist, err
 	}
 	// Fill playlist params
 	endpoint, err := y.CreateEndpointYoutubePlaylistParams(id)
@@ -64,24 +65,32 @@ func (y ServiceYouTube) GetYoutubePlaylistByID(link string) (*domain.Playlist, e
 	if err != nil {
 		return playlist, err
 	}
+	fmt.Println(playlist)
 
 	// fill Playlist media
-	endpoint, err = y.CreateEndpointYoutubePlaylistSongs(id)
-	if err != nil {
-		return playlist, err
+	var NextPageToken string
+	for {
+		endpoint, err = y.CreateEndpointYoutubePlaylistSongs(id, NextPageToken)
+		if err != nil {
+			return playlist, err
+		}
+		resp, err = y.createAndExecuteRequest(http.MethodGet, endpoint)
+		if err != nil {
+			return playlist, err
+		}
+		playlist, err = FillPlaylistSongs(resp, playlist)
+		if err != nil {
+			return playlist, err
+		}
+		if playlist.NextPageToken == "" {
+			return playlist, nil
+		}
+		NextPageToken = playlist.NextPageToken
 	}
-	resp, err = y.createAndExecuteRequest(http.MethodGet, endpoint)
-	if err != nil {
-		return playlist, err
-	}
-	playlist, err = FillPlaylist(resp, playlist)
-	if err != nil {
-		return playlist, err
-	}
-	return playlist, nil
+
 }
 
-// GetYoutubeMediaByMetadata - OK
+// GetYoutubeMediaByMetadata - Tested(OK)
 func (y ServiceYouTube) GetYoutubeMediaByMetadata(data domain.MetaData) (*domain.Song, error) {
 	song := &domain.Song{}
 	endpoint, err := y.CreateEndpointYoutubeMediaByMetadata(data)
@@ -99,8 +108,7 @@ func (y ServiceYouTube) GetYoutubeMediaByMetadata(data domain.MetaData) (*domain
 	return song, nil
 }
 
-// todo Test last method of service in prod
-
+// CreateYoutubePlaylist - Tested(OK)
 func (y ServiceYouTube) CreateYoutubePlaylist(SpotifyPlaylist domain.Playlist, token string) (*domain.Playlist, error) {
 	id, err := y.CreatePlaylist(token, SpotifyPlaylist.Title)
 	if err != nil {
