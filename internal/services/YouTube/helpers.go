@@ -7,24 +7,33 @@ import (
 	"errors"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"io"
 	"net/http"
 	"net/url"
-	"strings"
+	"regexp"
 )
 
-func ParseYouTubeIDFromURL(link string) (string, string, error) {
-	if strings.Contains(link, "https://www.youtube.com/watch?v=") {
-		id := strings.Split(link, "https://www.youtube.com/watch?v=")[1]
-		return "track", strings.Split(id, "?")[0], nil
+//todo Refactor
+
+func GetID(url string) (string, error) {
+	re := regexp.MustCompile(`^https://www.youtube.com/watch\?v=([^&]+)`)
+	matches := re.FindStringSubmatch(url)
+
+	if len(matches) < 2 {
+		re = regexp.MustCompile(`^https://youtube.com/playlist\?list=([^&]+)`)
+		matches = re.FindStringSubmatch(url)
+		if len(matches) < 2 {
+			return "", errors.New("YouTube URL Not Found")
+		}
+		return matches[1], nil
 	}
-	if strings.Contains(link, "https://youtube.com/playlist?list=") {
-		id := strings.Split(link, "https://youtube.com/playlist?list=")[1]
-		return "playlist", strings.Split(id, "?")[0], nil
-	}
-	return "", "", errors.New("can't parse ID, invalid URL format")
+
+	return matches[1], nil
 }
-func (y ServiceYouTube) createAndExecuteRequest(method, endpoint string) (*http.Response, error) {
+
+func (y ServiceYouTube) createAndExecuteRequest(method, endpoint string) (*io.ReadCloser, error) {
 	Url := y.BaseUrl + endpoint
+	fmt.Println(Url)
 	req, err := http.NewRequest(method, Url, nil)
 	if err != nil {
 		return nil, err
@@ -32,46 +41,46 @@ func (y ServiceYouTube) createAndExecuteRequest(method, endpoint string) (*http.
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
+
 	if resp.StatusCode != 200 {
-		return resp, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return &resp.Body, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
-	return resp, nil
+	return &resp.Body, nil
 }
 
-func (y ServiceYouTube) CreateEndpointYoutubeMediaById(id string) (string, error) {
+func (y ServiceYouTube) CreateEndpointYoutubeMediaById(id string) (endpoint string, err error) {
 	if y.Key == "" {
 		return "", errors.New("YouTube key is empty")
 	}
-	endpoint := fmt.Sprintf("videos?id=%s&key=%s&part=snippet,status", id, y.Key)
-	return endpoint, nil
+	return fmt.Sprintf("videos?id=%s&key=%s&part=snippet,status", id, y.Key), nil
 }
-func (y ServiceYouTube) CreateEndpointYoutubePlaylistSongs(id string) (string, error) {
+func (y ServiceYouTube) CreateEndpointYoutubePlaylistSongs(id, nextPageToken string) (endpoint string, err error) {
 	if y.Key == "" {
 		return "", errors.New("YouTube key is empty")
 	}
-	endpoint := fmt.Sprintf("playlistItems?playlistId=%s&key=%s&part=snippet,status", id, y.Key)
-	return endpoint, nil
+	if nextPageToken == "" {
+		return fmt.Sprintf("playlistItems?playlistId=%s&key=%s&part=snippet,status&maxResults=50", id, y.Key), nil
+	}
+	return fmt.Sprintf("playlistItems?playlistId=%s&key=%s&part=snippet,status&maxResults=50&pageToken=%s", id, y.Key, nextPageToken), nil
 }
-func (y ServiceYouTube) CreateEndpointYoutubePlaylistParams(id string) (string, error) {
+func (y ServiceYouTube) CreateEndpointYoutubePlaylistParams(id string) (endpoint string, err error) {
 	if y.Key == "" {
 		return "", errors.New("YouTube key is empty")
 	}
-	endpoint := fmt.Sprintf("playlists?id=%s&key=%s&part=snippet,status", id, y.Key)
-	return endpoint, nil
+	return fmt.Sprintf("playlists?id=%s&key=%s&part=snippet,status", id, y.Key), nil
 }
-func (y ServiceYouTube) CreateEndpointYoutubeMediaByMetadata(data domain.MetaData) (string, error) {
+func (y ServiceYouTube) CreateEndpointYoutubeMediaByMetadata(data domain.MetaData) (endpoint string, err error) {
 	if y.Key == "" {
 		return "", errors.New("YouTube key is empty")
 	}
-	endpoint := fmt.Sprintf("search?part=snippet&maxResults=1&q=%s+%s&key=%s", url.QueryEscape(data.Title), url.QueryEscape(data.Artist), y.Key)
-	return endpoint, nil
+	return fmt.Sprintf("search?part=snippet&maxResults=1&q=%s+%s&key=%s", url.QueryEscape(data.Title), url.QueryEscape(data.Artist), y.Key), nil
 }
 
-func DecodeRespMediaById(resp *http.Response) (*domain.Song, error) {
+func DecodeRespMediaById(body *io.ReadCloser) (*domain.Song, error) {
 	var Media youtubeMediaById
-	if err := json.NewDecoder(resp.Body).Decode(&Media); err != nil {
+	if err := json.NewDecoder(*body).Decode(&Media); err != nil {
 		return nil, errors.New("can't decode response")
 	}
 
@@ -81,9 +90,9 @@ func DecodeRespMediaById(resp *http.Response) (*domain.Song, error) {
 		Link:   Media.Items[0].VideoId,
 	}, nil
 }
-func DecodeRespMediaByMetadata(resp *http.Response) (*domain.Song, error) {
+func DecodeRespMediaByMetadata(body *io.ReadCloser) (*domain.Song, error) {
 	var Media youtubeMediaByMetadata
-	if err := json.NewDecoder(resp.Body).Decode(&Media); err != nil {
+	if err := json.NewDecoder(*body).Decode(&Media); err != nil {
 		return nil, errors.New("can't decode response")
 	}
 	return &domain.Song{
@@ -93,9 +102,9 @@ func DecodeRespMediaByMetadata(resp *http.Response) (*domain.Song, error) {
 	}, nil
 }
 
-func FillPlaylistParams(resp *http.Response, playlist *domain.Playlist) error {
-	var Playlist youtubePlaylistById
-	if err := json.NewDecoder(resp.Body).Decode(&Playlist); err != nil {
+func FillPlaylistParams(body *io.ReadCloser, playlist *domain.Playlist) error {
+	var Playlist youtubePlaylistParamsById
+	if err := json.NewDecoder(*body).Decode(&Playlist); err != nil {
 		return errors.New("can't decode response")
 	}
 
@@ -105,9 +114,9 @@ func FillPlaylistParams(resp *http.Response, playlist *domain.Playlist) error {
 	return nil
 }
 
-func FillPlaylist(resp *http.Response, playlist *domain.Playlist) (*domain.Playlist, error) {
-	var Playlist youtubeResponsePlaylist
-	if err := json.NewDecoder(resp.Body).Decode(&Playlist); err != nil {
+func FillPlaylistSongs(body *io.ReadCloser, playlist *domain.Playlist) (*domain.Playlist, error) {
+	var Playlist youtubeResponsePlaylistMediaById
+	if err := json.NewDecoder(*body).Decode(&Playlist); err != nil {
 		return &domain.Playlist{}, errors.New("can't decode response")
 	}
 	for _, media := range Playlist.Items {
@@ -116,6 +125,7 @@ func FillPlaylist(resp *http.Response, playlist *domain.Playlist) (*domain.Playl
 			Artist: media.Snippet.ChannelTitle,
 		})
 	}
+	playlist.NextPageToken = Playlist.NextPageToken
 	return playlist, nil
 }
 func (y ServiceYouTube) CreatePlaylist(token, playlistTitle string) (string, error) {

@@ -21,7 +21,8 @@ type (
 		ClientSecret string `json:"client_secret"`
 	}
 	YoutubeConfig struct {
-		Key string `json:"key"`
+		Key      string `json:"key"`
+		ClientID string `json:"clientID"`
 	}
 	MongoDb struct {
 		Uri            string `json:"Uri"`

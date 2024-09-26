@@ -3,12 +3,15 @@ package YouTube
 import logger "github.com/skwizi4/lib/logs"
 
 const BaseUrl = "https://www.googleapis.com/youtube/v3/"
+const ServerUrl = "http://localhost:8080/authToken"
 
 type ServiceYouTube struct {
-	Key     string
-	BaseUrl string
-	logger  logger.GoLogger
-	Token   string
+	Key       string
+	BaseUrl   string
+	logger    logger.GoLogger
+	Token     string
+	ClientID  string
+	ServerUrl string
 }
 
 type (
@@ -21,7 +24,7 @@ type (
 			} `json:"snippet"`
 		} `json:"items"`
 	}
-	youtubePlaylistById struct {
+	youtubePlaylistParamsById struct {
 		Items []struct {
 			Snippet struct {
 				Title        string `json:"title"`
@@ -29,13 +32,14 @@ type (
 			} `json:"snippet"`
 		} `json:"items"`
 	}
-	youtubeResponsePlaylist struct {
+	youtubeResponsePlaylistMediaById struct {
 		Items []struct {
 			Snippet struct {
 				Title        string `json:"title"`
 				ChannelTitle string `json:"videoOwnerChannelTitle"`
 			} `json:"snippet"`
 		} `json:"items"`
+		NextPageToken string `json:"nextPageToken"`
 	}
 	youtubeMediaByMetadata struct {
 		Items []struct {
