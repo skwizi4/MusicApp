@@ -24,7 +24,6 @@ func (s ServiceSpotify) CreateRequest(method, endpoint string) (*http.Request, e
 	return req, nil
 }
 func (s ServiceSpotify) doRequest(req *http.Request) (*http.Response, error) {
-	// Выполняем запрос
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {

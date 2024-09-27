@@ -33,7 +33,6 @@ func GetID(url string) (string, error) {
 
 func (y ServiceYouTube) createAndExecuteRequest(method, endpoint string) (*io.ReadCloser, error) {
 	Url := y.BaseUrl + endpoint
-	fmt.Println(Url)
 	req, err := http.NewRequest(method, Url, nil)
 	if err != nil {
 		return nil, err
@@ -87,7 +86,7 @@ func DecodeRespMediaById(body *io.ReadCloser) (*domain.Song, error) {
 	return &domain.Song{
 		Title:  Media.Items[0].Snippet.Title,
 		Artist: Media.Items[0].Snippet.ChanelName,
-		Link:   Media.Items[0].VideoId,
+		Link:   YoutubeTrackDomen + Media.Items[0].VideoId,
 	}, nil
 }
 func DecodeRespMediaByMetadata(body *io.ReadCloser) (*domain.Song, error) {

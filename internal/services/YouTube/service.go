@@ -10,7 +10,7 @@ import (
 
 //todo Refactor
 
-func New(cfg config.Config) ServiceYouTube {
+func NewYouTubeService(cfg config.Config) ServiceYouTube {
 	return ServiceYouTube{
 		BaseUrl:   BaseUrl,
 		logger:    logger.InitLogger(),
@@ -97,10 +97,12 @@ func (y ServiceYouTube) GetYoutubeMediaByMetadata(data domain.MetaData) (*domain
 	if err != nil {
 		return song, err
 	}
+
 	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint)
 	if err != nil {
 		return song, err
 	}
+
 	song, err = DecodeRespMediaByMetadata(resp)
 	if err != nil {
 		return song, err

@@ -81,7 +81,7 @@ func (a *App) InitValidator() {
 
 // PopulateConfig Проверяет конфиг
 func (a *App) PopulateConfig() {
-	cfg, err := config.ParseConfig("C:\\golang\\src\\MusicApp\\config.json")
+	cfg, err := config.ParseConfig("/home/skwizi_4/code/MusicApp/config.json")
 	if err != nil {
 		a.logger.ErrorFrmt("error in parsing config: %s", err)
 	}
@@ -151,4 +151,6 @@ func (a *App) ListenTgBot() {
 		}
 	})
 	a.bot.Start()
+	defer a.bot.Stop()
+
 }

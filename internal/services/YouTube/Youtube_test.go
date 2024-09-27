@@ -12,7 +12,7 @@ func TestServiceYouTube_GetYoutubeMediaByID(t *testing.T) {
 	a := app.New("test")
 	a.InitValidator()
 	a.PopulateConfig()
-	youtubeService := New(a.Config)
+	youtubeService := NewYouTubeService(a.Config)
 	song, err := youtubeService.GetYoutubeMediaByID("https://www.youtube.com/watch?v=hTWKbfoikeg")
 	if err != nil {
 		t.Error(err)
@@ -28,7 +28,7 @@ func TestServiceYouTube_GetYoutubePlaylistByID(t *testing.T) {
 	a := app.New("test")
 	a.InitValidator()
 	a.PopulateConfig()
-	youtubeService := New(a.Config)
+	youtubeService := NewYouTubeService(a.Config)
 	playlist, err := youtubeService.GetYoutubePlaylistByID("https://youtube.com/playlist?list=PLinB3MHWKsOORBP1pMnDLh_arJrmq-ieS&si=eSAVwwTjUvoZOZGu")
 	if err != nil {
 		t.Error(err)
@@ -46,7 +46,7 @@ func TestServiceYouTube_GetYoutubeMediaByMetadata(t *testing.T) {
 	a := app.New("test")
 	a.InitValidator()
 	a.PopulateConfig()
-	youtubeService := New(a.Config)
+	youtubeService := NewYouTubeService(a.Config)
 	song, err := youtubeService.GetYoutubeMediaByMetadata(domain.MetaData{Title: "close eyes ", Artist: "dvrst"})
 	if err != nil {
 		t.Error(err)
@@ -59,7 +59,7 @@ func TestServiceYouTube_FillYoutubePlaylist(t *testing.T) {
 	a := app.New("test")
 	a.InitValidator()
 	a.PopulateConfig()
-	youtubeService := New(a.Config)
+	youtubeService := NewYouTubeService(a.Config)
 	acessToken := "ya29.a0AcM612zn95iOwzTB4s4JmDAgC_JV3jBbxoA06XRwmTNiIcOdUk" +
 		"_-0C2YXvIDZr_oViX9R-8ab2xO3tU9Z7UWiB3S-xViYIISSosL32MiebqASkseC8MI7" +
 		"rcJm5TfpUEUgYWCigsyvbuO27xDUfZV0LodYQRkgsqvyGi4J2NOaCgYKAZkSARASFQH" +
@@ -71,7 +71,15 @@ func TestServiceYouTube_FillYoutubePlaylist(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Println(playlist)
+
 }
 
-//token := fmt.Sprintf("https://accounts.google.com/o/oauth2/token?client_id=%s&amp;redirect_uri=%s&amp;response_type=code&amp;scope=https://www.googleapis.com/auth/youtube", youtubeService.ClientID, youtubeService.ServerUrl)
-//fmt.Println(token)
+func Test_Link(t *testing.T) {
+	a := app.New("test")
+	a.InitValidator()
+	a.PopulateConfig()
+	youtubeService := NewYouTubeService(a.Config)
+	token := fmt.Sprintf("https://accounts.google.com/o/oauth2/token?client_id=%s&amp;redirect_uri=%s&amp;response_type=code&amp;scope=https://www.googleapis.com/auth/youtube", youtubeService.ClientID, youtubeService.ServerUrl)
+	fmt.Println(token)
+
+}

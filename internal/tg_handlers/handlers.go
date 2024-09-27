@@ -24,7 +24,7 @@ func New(bot *tg.Bot, spotifyHandler handlers.Spotify, youtubeHandler handlers.Y
 
 // todo - Добавить в основной тгешный хендлер хендлера спотифая и ютуба, дописать запрос к ютубу после получения данных
 func (h Handler) SpotifySong(msg *tg.Message) {
-	_, err := h.spotifyHandler.GetSongByYoutubeLink(msg)
+	err := h.spotifyHandler.GetSongByYoutubeLink(msg)
 	if err != nil {
 		h.errChan.HandleError(err)
 	}
