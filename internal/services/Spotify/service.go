@@ -9,6 +9,8 @@ import (
 	"net/url"
 )
 
+// todo - Refactor
+
 func NewSpotifyService(cfg config.Config) ServiceSpotify {
 	return ServiceSpotify{
 		BaseUrl:      BaseUrl,
@@ -23,23 +25,25 @@ func (s ServiceSpotify) GetSpotifyTrackById(link string) (*domain.Song, error) {
 	if isTrack == "playlist" {
 		return nil, errors.New("invalid link, its link of playlist")
 	}
+
 	if err != nil {
 		return nil, err
 	}
 	if err = s.RequestToken(); err != nil {
 		return nil, err
 	}
+
 	req, err := s.CreateRequest(http.MethodGet, "/v1/tracks/"+id)
 	if err != nil {
 		return nil, err
 	}
+
 	resp, err := s.doRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
 	Track, err := s.decodeRespTrackById(resp)
-
 	if err != nil {
 		return nil, err
 	}
@@ -47,6 +51,8 @@ func (s ServiceSpotify) GetSpotifyTrackById(link string) (*domain.Song, error) {
 	return Track, nil
 
 }
+
+// todo - Check bugs
 func (s ServiceSpotify) GetSpotifyPlaylistById(link string) (*domain.Playlist, error) {
 	isPlaylist, id, err := ParseSpotifyIDFromURL(link)
 	if isPlaylist == "track" {

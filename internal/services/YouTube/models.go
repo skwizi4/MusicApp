@@ -4,6 +4,7 @@ import logger "github.com/skwizi4/lib/logs"
 
 const BaseUrl = "https://www.googleapis.com/youtube/v3/"
 const ServerUrl = "http://localhost:8080/authToken"
+const YoutubeTrackDomen = "https://www.youtube.com/watch?v="
 
 type ServiceYouTube struct {
 	Key       string
