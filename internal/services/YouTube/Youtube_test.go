@@ -60,10 +60,7 @@ func TestServiceYouTube_FillYoutubePlaylist(t *testing.T) {
 	a.InitValidator()
 	a.PopulateConfig()
 	youtubeService := NewYouTubeService(a.Config)
-	acessToken := "ya29.a0AcM612zn95iOwzTB4s4JmDAgC_JV3jBbxoA06XRwmTNiIcOdUk" +
-		"_-0C2YXvIDZr_oViX9R-8ab2xO3tU9Z7UWiB3S-xViYIISSosL32MiebqASkseC8MI7" +
-		"rcJm5TfpUEUgYWCigsyvbuO27xDUfZV0LodYQRkgsqvyGi4J2NOaCgYKAZkSARASFQH" +
-		"GX2MiQYwTyHcsMDs_EQ56hXJeVg0175"
+	acessToken := "4/0AVG7fiT4m7tJnQE3hjmvBBXqDzr1ZXHyndO8dI1TIJ4ErJiHY3DEgifhZVazRfLG4deoqQ"
 	songs := make([]domain.Song, 0)
 	songs = append(songs, domain.Song{Title: "Sonne", Artist: "Rammstein"})
 	playlist, err := youtubeService.CreateYoutubePlaylist(domain.Playlist{Title: "Example", Songs: songs}, acessToken)
@@ -71,15 +68,5 @@ func TestServiceYouTube_FillYoutubePlaylist(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Println(playlist)
-
-}
-
-func Test_Link(t *testing.T) {
-	a := app.New("test")
-	a.InitValidator()
-	a.PopulateConfig()
-	youtubeService := NewYouTubeService(a.Config)
-	token := fmt.Sprintf("https://accounts.google.com/o/oauth2/token?client_id=%s&amp;redirect_uri=%s&amp;response_type=code&amp;scope=https://www.googleapis.com/auth/youtube", youtubeService.ClientID, youtubeService.ServerUrl)
-	fmt.Println(token)
 
 }

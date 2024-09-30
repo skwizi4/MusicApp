@@ -31,3 +31,6 @@ main
 
 #cfg json
 config.json
+#ssh_key
+ssh_key
+ssh_key.pub
