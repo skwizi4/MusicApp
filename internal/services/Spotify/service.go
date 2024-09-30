@@ -52,7 +52,7 @@ func (s ServiceSpotify) GetSpotifyTrackById(link string) (*domain.Song, error) {
 
 }
 
-// todo - Check bugs
+// GetSpotifyPlaylistById todo - Check bugs
 func (s ServiceSpotify) GetSpotifyPlaylistById(link string) (*domain.Playlist, error) {
 	isPlaylist, id, err := ParseSpotifyIDFromURL(link)
 	if isPlaylist == "track" {

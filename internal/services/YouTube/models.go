@@ -1,10 +1,13 @@
 package YouTube
 
-import logger "github.com/skwizi4/lib/logs"
+import (
+	logger "github.com/skwizi4/lib/logs"
+)
 
 const BaseUrl = "https://www.googleapis.com/youtube/v3/"
-const ServerUrl = "http://localhost:8080/authToken"
-const YoutubeTrackDomen = "https://www.youtube.com/watch?v="
+const ServerUrl = "http://localhost:8080/auth/google/callback"
+const youtubeTrackDomen = "https://www.youtube.com/watch?v="
+const scope = "https://www.googleapis.com/auth/youtube"
 
 type ServiceYouTube struct {
 	Key       string
@@ -13,6 +16,7 @@ type ServiceYouTube struct {
 	Token     string
 	ClientID  string
 	ServerUrl string
+	Scope     string
 }
 
 type (

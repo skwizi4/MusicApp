@@ -141,7 +141,6 @@ func (s *ServiceSpotify) RequestToken() error {
 	}
 
 	s.Token = token
-	s.Logger.Info("Key successfully retrieved")
 
 	return nil
 }

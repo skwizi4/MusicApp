@@ -17,6 +17,7 @@ func NewYouTubeService(cfg config.Config) ServiceYouTube {
 		Key:       cfg.YoutubeCfg.Key,
 		ClientID:  cfg.YoutubeCfg.ClientID,
 		ServerUrl: ServerUrl,
+		Scope:     scope,
 	}
 }
 
