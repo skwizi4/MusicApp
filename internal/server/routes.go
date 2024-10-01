@@ -15,58 +15,67 @@ import (
 func (s *Server) RegisterRoutes() http.Handler {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/", s.HelloWorldHandler)
-
-	r.HandleFunc("/health", s.healthHandler)
-
 	r.HandleFunc("/auth/google/callback", s.getAuthCallBackFunction)
 	return r
 }
 
-func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
-	resp := make(map[string]string)
-	resp["message"] = "Hello World"
-
-	jsonResp, err := json.Marshal(resp)
-	if err != nil {
-		log.Fatalf("error handling JSON marshal. Err: %v", err)
-	}
-
-	_, _ = w.Write(jsonResp)
-}
-
-func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	jsonResp, err := json.Marshal(s.db.Health())
-
-	if err != nil {
-		log.Fatalf("error handling JSON marshal. Err: %v", err)
-	}
-
-	_, _ = w.Write(jsonResp)
-}
-
 // todo -refactor + fix bugs
 func (s *Server) getAuthCallBackFunction(w http.ResponseWriter, r *http.Request) {
-	autorizationToken := r.URL.Query()["code"][0]
-	data := url.Values{}
-	data.Set("code", autorizationToken)
-	data.Set("client_id", os.Getenv("GOOGLE_CLIENT_ID"))
-	data.Set("client_secret", os.Getenv("GOOGLE_CLIENT_SECRET"))
-	data.Set("redirect_uri", "http://localhost:8080/auth/google/callback")
-	data.Set("grant_type", "authorization_code")
-	req, _ := http.NewRequest("POST", "https://oauth2.googleapis.com/token", strings.NewReader(data.Encode())) // URL-encoded payload
+	code := r.URL.Query().Get("code")
+	TelegramId := r.URL.Query().Get("state")
+	if code == "" || TelegramId == "" {
+		http.Error(w, "Invalid request, missing code or TelegramID", http.StatusBadRequest)
+		return
+	}
+
+	s.logger.InfoFrmt("Code: %s\nTelegramID: %s", code, TelegramId)
+
+	// Создание данных для запроса токена
+	data := url.Values{
+		"code":          {code},
+		"client_id":     {os.Getenv("GOOGLE_CLIENT_ID")},
+		"client_secret": {os.Getenv("GOOGLE_CLIENT_SECRET")},
+		"redirect_uri":  {"http://localhost:8080/auth/google/callback"},
+		"grant_type":    {"authorization_code"},
+	}
+
+	// Запрос токена
+	req, err := http.NewRequest("POST", "https://oauth2.googleapis.com/token", strings.NewReader(data.Encode()))
+	if err != nil {
+		s.logger.ErrorFrmt("Failed to create request: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, _ := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		s.logger.ErrorFrmt("Request failed: %v", err)
+		http.Error(w, "Failed to get token from Google", http.StatusInternalServerError)
+		return
+	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
+
+	s.logger.InfoFrmt("Response status: %s", resp.Status)
+
+	// Чтение тела ответа
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		s.logger.ErrorFrmt("Failed to read response body: %v", err)
+		http.Error(w, "Failed to read response from Google", http.StatusInternalServerError)
+		return
+	}
+
+	s.logger.InfoFrmt("Response body: %s", string(body))
+	var result TokenResponse
+	if err = json.Unmarshal(body, &result); err != nil {
 		log.Fatal(err)
 	}
-	err = s.db.Add(result["access_token"].(string))
+	s.logger.InfoFrmt("Response result: %s", result)
+	err = s.db.Create(result.AccessToken, TelegramId)
 	if err != nil {
-		log.Println(err)
+		s.logger.ErrorFrmt("Failed to pull token into db : %v", err)
+		return
 	}
 
 	http.Redirect(w, r, "http://localhost:5317", http.StatusFound)

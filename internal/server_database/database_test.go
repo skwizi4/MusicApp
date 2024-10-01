@@ -1,4 +1,4 @@
-package database
+package server_database
 
 import (
 	"context"
