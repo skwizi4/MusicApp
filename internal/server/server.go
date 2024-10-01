@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/skwizi4/lib/logs"
 	"net/http"
 	"os"
 	"strconv"
@@ -9,21 +10,33 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"MusicApp/internal/database"
+	"MusicApp/internal/server_database"
 )
 
-type Server struct {
-	port int
+type TokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+	Scope        string `json:"scope"`
+	TokenType    string `json:"token_type"`
+}
 
-	db database.Service
+type Server struct {
+	port   int
+	logger logs.GoLogger
+	db     server_database.Service
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
+	db, err := server_database.New()
+	if err != nil {
+		panic(err)
+	}
 	newServer := &Server{
-		port: port,
-
-		db: database.New(),
+		port:   port,
+		logger: logs.InitLogger(),
+		db:     db,
 	}
 
 	// Declare Server config
