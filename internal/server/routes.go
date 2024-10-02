@@ -72,7 +72,7 @@ func (s *Server) getAuthCallBackFunction(w http.ResponseWriter, r *http.Request)
 		log.Fatal(err)
 	}
 	s.logger.InfoFrmt("Response result: %s", result)
-	err = s.db.Create(result.AccessToken, TelegramId)
+	err = s.db.Add(TelegramId, result.AccessToken, result.RefreshToken)
 	if err != nil {
 		s.logger.ErrorFrmt("Failed to pull token into db : %v", err)
 		return

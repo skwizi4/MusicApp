@@ -15,7 +15,10 @@ import (
 
 type Service interface {
 	Health() map[string]string
-	Create(telegramId, token string) error
+	Add(telegramId, token, refreshToken string) error
+	Update(telegramId, token, refreshToken string) error
+	Delete(telegramId string) error
+	Get(telegramId string) (*AuthParams, error)
 }
 
 type Mongo struct {
@@ -26,8 +29,9 @@ type Mongo struct {
 	Collection     *mongo.Collection
 }
 type AuthParams struct {
-	Token      string `json:"token"`
-	TelegramID string `json:"telegram_id"`
+	Token        string `json:"token" bson:"token"`
+	TelegramID   string `json:"telegramId" bson:"telegram_Id"`
+	RefreshToken string `json:"refreshToken" bson:"refresh_Token"`
 }
 
 var (
@@ -57,30 +61,4 @@ func New() (*Mongo, error) {
 		Logger:         logger.InitLogger(),
 		Collection:     collection,
 	}, nil
-}
-
-func (s *Mongo) Health() map[string]string {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
-	err := s.Client.Ping(ctx, nil)
-	if err != nil {
-		log.Fatalf(fmt.Sprintf("db down: %v", err))
-	}
-
-	return map[string]string{
-		"message": "It's healthy",
-	}
-}
-
-func (s *Mongo) Create(telegramId, token string) error {
-	AuthParam := AuthParams{
-		Token:      token,
-		TelegramID: telegramId,
-	}
-	_, err := s.Collection.InsertOne(context.Background(), AuthParam)
-	if err != nil {
-		return err
-	}
-	return nil
 }
