@@ -85,6 +85,7 @@ func (s ServiceSpotify) GetSpotifyTrackByMetadata(data domain.MetaData) (*domain
 	if err != nil {
 		return nil, err
 	}
+
 	Song, err := s.decodeRespTrackByName(resp)
 	if err != nil {
 		return nil, err

@@ -7,8 +7,13 @@ import (
 // todo - Заполнить структуры и написать к ним crud - методы
 
 const (
-	ProcessSpotifySongStart = "ProcessSpotifySongStart"
-	ProcessSpotifySongEnd   = "ProcessSpotifySongEnd"
+	ProcessSpotifySongByIdStart = "ProcessSpotifySongByIdStart"
+	ProcessSpotifySongByIdEnd   = "ProcessSpotifySongByIdEnd"
+
+	ProcessSpotifySongByMetadataStart  = "ProcessSpotifySongByMetadataStart"
+	ProcessSpotifySongByMetadataTitle  = "ProcessSpotifySongByMetadataTitle"
+	ProcessSpotifySongByMetadataArtist = "ProcessSpotifySongByMetadataArtist"
+	ProcessSpotifySongByMetadataEnd    = "ProcessSpotifySongByMetadataEnd"
 
 	ProcessSpotifyPlaylistStart = "ProcessSpotifyPlaylistStart"
 	ProcessSpotifyPlaylistEnd   = "ProcessSpotifyPlaylistEnd"
@@ -75,7 +80,7 @@ type ProcessSpotifySong struct {
 	ChatID int64
 	Step   string
 }
-type ProcessingSpotifySongs []ProcessSpotifySong
+type ProcessingSpotifySongsByID []ProcessSpotifySong
 
 type ProcessSpotifyPlaylist struct {
 	chatID   int64
@@ -107,3 +112,7 @@ type ProcessFindSong struct {
 	step     string
 }
 type ProcessingFindSongs []ProcessFindSong
+
+//todo - refactor
+
+type ProcessingFindSongByMetadata []ProcessSpotifySong

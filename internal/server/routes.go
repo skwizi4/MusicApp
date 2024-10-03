@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,6 +17,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/auth/google/callback", s.getAuthCallBackFunction)
+	r.HandleFunc("/authentication_completed", s.AuthCompleted)
 	return r
 }
 
@@ -78,5 +80,8 @@ func (s *Server) getAuthCallBackFunction(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	http.Redirect(w, r, "http://localhost:5317", http.StatusFound)
+	http.Redirect(w, r, "http://localhost:8080/authentication_completed", http.StatusFound)
+}
+func (s *Server) AuthCompleted(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "You have been authenticated")
 }
