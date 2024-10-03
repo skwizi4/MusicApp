@@ -18,17 +18,18 @@ import (
 
 // App - structure of app
 type App struct {
-	appName                string
-	bot                    *tg.Bot
-	Config                 config.Config
-	errChan                *ErrChan.ErrorChannel
-	logger                 logger.GoLogger
-	validator              *validator.Validate
-	mongo                  *MongoDB.MongoDB
-	spotifyHandler         handlers.Spotify
-	youtubeHandler         handlers.YouTube
-	telegramHandler        tg_handlers.Handler
-	processingSpotifySongs domain.ProcessingSpotifySongs
+	appName                          string
+	bot                              *tg.Bot
+	Config                           config.Config
+	errChan                          *ErrChan.ErrorChannel
+	logger                           logger.GoLogger
+	validator                        *validator.Validate
+	mongo                            *MongoDB.MongoDB
+	spotifyHandler                   handlers.Spotify
+	youtubeHandler                   handlers.YouTube
+	telegramHandler                  tg_handlers.Handler
+	processingSpotifySongs           domain.ProcessingSpotifySongsByID
+	processingSpotifySongsByMetadata domain.ProcessingFindSongByMetadata
 }
 
 // New - return new variation of application
@@ -148,6 +149,8 @@ func (a *App) ListenTgBot() {
 		switch {
 		case a.processingSpotifySongs.IfExist(msg.Chat.ID):
 			go a.telegramHandler.SpotifySong(msg)
+		case a.processingSpotifySongsByMetadata.IfExist(msg.Chat.ID):
+			go a.telegramHandler.FindSong(msg)
 		}
 	})
 	a.bot.Start()

@@ -97,7 +97,7 @@ func DecodeRespMediaByMetadata(body *io.ReadCloser) (*domain.Song, error) {
 	return &domain.Song{
 		Title:  Media.Items[0].Snippet.Title,
 		Artist: Media.Items[0].Snippet.ChanelName,
-		Link:   Media.Items[0].Id.VideoId,
+		Link:   youtubeTrackDomen + Media.Items[0].Id.VideoId,
 	}, nil
 }
 

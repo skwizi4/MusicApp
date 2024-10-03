@@ -4,20 +4,20 @@ import (
 	"errors"
 )
 
-//ProcessingSpotifySongs
+//ProcessingSpotifySongsByID
 
-func (p *ProcessingSpotifySongs) GetOrCreate(chatID int64) ProcessSpotifySong {
+func (p *ProcessingSpotifySongsByID) GetOrCreate(chatID int64) ProcessSpotifySong {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		return (*p)[idx]
 	}
 	NewProcess := ProcessSpotifySong{
 		ChatID: chatID,
-		Step:   ProcessSpotifySongStart,
+		Step:   ProcessSpotifySongByIdStart,
 	}
 	*p = append(*p, NewProcess)
 	return NewProcess
 }
-func (p *ProcessingSpotifySongs) IfExist(chatID int64) bool {
+func (p *ProcessingSpotifySongsByID) IfExist(chatID int64) bool {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		return true
 	}
@@ -25,16 +25,66 @@ func (p *ProcessingSpotifySongs) IfExist(chatID int64) bool {
 
 }
 
-func (p *ProcessingSpotifySongs) UpdateStep(step string, chatID int64) error {
+func (p *ProcessingSpotifySongsByID) UpdateStep(step string, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		(*p)[idx].Step = step
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)
 }
-func (p *ProcessingSpotifySongs) Delete(chatID int64) error {
+func (p *ProcessingSpotifySongsByID) Delete(chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		*p = append((*p)[:idx], (*p)[idx+1:]...)
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}
+
+//ProcessSpotifyByMetadata
+
+func (p *ProcessingFindSongByMetadata) GetOrCreate(chatID int64) ProcessSpotifySong {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		return (*p)[idx]
+	}
+	NewProcess := ProcessSpotifySong{
+		ChatID: chatID,
+		Step:   ProcessSpotifySongByMetadataStart,
+	}
+	*p = append(*p, NewProcess)
+	return NewProcess
+}
+func (p *ProcessingFindSongByMetadata) IfExist(chatID int64) bool {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		return true
+	}
+	return false
+
+}
+
+func (p *ProcessingFindSongByMetadata) UpdateStep(step string, chatID int64) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].Step = step
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}
+func (p *ProcessingFindSongByMetadata) Delete(chatID int64) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		*p = append((*p)[:idx], (*p)[idx+1:]...)
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}
+func (p *ProcessingFindSongByMetadata) AddTitle(chatID int64, title string) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].Song.Title = title
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}
+func (p *ProcessingFindSongByMetadata) AddArtist(chatID int64, artist string) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].Song.Artist = artist
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)

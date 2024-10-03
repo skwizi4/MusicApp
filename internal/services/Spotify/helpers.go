@@ -19,8 +19,8 @@ func (s ServiceSpotify) CreateRequest(method, endpoint string) (*http.Request, e
 	if err != nil {
 		return nil, err
 	}
-
 	req.Header.Add("Authorization", "Bearer "+s.Token)
+
 	return req, nil
 }
 func (s ServiceSpotify) doRequest(req *http.Request) (*http.Response, error) {
