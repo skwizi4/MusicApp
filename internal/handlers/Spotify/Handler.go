@@ -8,6 +8,7 @@ import (
 	YouTubeService "MusicApp/internal/services/YouTube"
 	"fmt"
 	"github.com/skwizi4/lib/ErrChan"
+	"github.com/skwizi4/lib/logs"
 	tg "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -18,10 +19,11 @@ type Handler struct {
 	spotifyService             services.SpotifyService
 	youtubeService             services.YouTubeService
 	cfg                        config.Config
+	logger                     logs.GoLogger
 }
 
 func New(bot *tg.Bot, processingSpotifySongs *domain.ProcessingSpotifySongsByID,
-	errChan *ErrChan.ErrorChannel, cfg config.Config,
+	errChan *ErrChan.ErrorChannel, cfg config.Config, logger logs.GoLogger,
 ) Handler {
 	return Handler{
 		bot:                        bot,
@@ -30,6 +32,7 @@ func New(bot *tg.Bot, processingSpotifySongs *domain.ProcessingSpotifySongsByID,
 		processingSpotifySongsById: processingSpotifySongs,
 		errChannel:                 errChan,
 		cfg:                        cfg,
+		logger:                     logger,
 	}
 }
 

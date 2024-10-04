@@ -96,7 +96,7 @@ type ProcessYouTubeSong struct {
 	song   Song
 	step   string
 }
-type ProcessingYoutubeSongs []ProcessYouTubeSong
+type ProcessingYoutubeMediaById []ProcessYouTubeSong
 
 type ProcessYoutubePlaylist struct {
 	title  string

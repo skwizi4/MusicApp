@@ -6,7 +6,6 @@ import (
 	"errors"
 	logger "github.com/skwizi4/lib/logs"
 	"net/http"
-	"net/url"
 )
 
 // todo - Refactor
@@ -29,11 +28,15 @@ func (s ServiceSpotify) GetSpotifyTrackById(link string) (*domain.Song, error) {
 	if err != nil {
 		return nil, err
 	}
+	endpoint, err := s.CreateEndpointSpotifyTrackById(id)
+	if err != nil {
+		return nil, err
+	}
 	if err = s.RequestToken(); err != nil {
 		return nil, err
 	}
 
-	req, err := s.CreateRequest(http.MethodGet, "/v1/tracks/"+id)
+	req, err := s.CreateRequest(http.MethodGet, endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +64,15 @@ func (s ServiceSpotify) GetSpotifyPlaylistById(link string) (*domain.Playlist, e
 	if err != nil {
 		return nil, err
 	}
-	req, err := s.CreateRequest(http.MethodGet, "/v1/playlists/"+id)
+	err = s.RequestToken()
+	if err != nil {
+		return nil, err
+	}
+	endpoint, err := s.CreateEndpointSpotifyPlaylistById(id)
+	if err != nil {
+		return nil, err
+	}
+	req, err := s.CreateRequest(http.MethodGet, endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -76,11 +87,21 @@ func (s ServiceSpotify) GetSpotifyPlaylistById(link string) (*domain.Playlist, e
 	return Playlist, nil
 
 }
+
+// todo GetSpotifyTrackByMetadata  -refactor
 func (s ServiceSpotify) GetSpotifyTrackByMetadata(data domain.MetaData) (*domain.Song, error) {
-	req, err := s.CreateRequest(http.MethodGet, "/v1/search?q=track:"+url.QueryEscape(data.Title)+"+artist:"+url.QueryEscape(data.Artist)+"&type=track&limit=10&offset=5")
+	endpoint, err := s.CreateEndpointSpotifyTrackByMetadata(data.Title, data.Artist)
 	if err != nil {
 		return nil, err
 	}
+	if err = s.RequestToken(); err != nil {
+		return nil, err
+	}
+	req, err := s.CreateRequest(http.MethodGet, endpoint)
+	if err != nil {
+		return nil, err
+	}
+
 	resp, err := s.doRequest(req)
 	if err != nil {
 		return nil, err
@@ -90,7 +111,6 @@ func (s ServiceSpotify) GetSpotifyTrackByMetadata(data domain.MetaData) (*domain
 	if err != nil {
 		return nil, err
 	}
-
 	return Song, nil
 
 }

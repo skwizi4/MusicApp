@@ -2,6 +2,7 @@ package Spotify
 
 import (
 	"MusicApp/internal/domain"
+	"MusicApp/internal/tg_handlers"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -12,6 +13,28 @@ import (
 	"strings"
 )
 
+func (s ServiceSpotify) CreateEndpointSpotifyTrackByMetadata(title, artist string) (string, error) {
+	if title == "" || artist == "" {
+		return "", errors.New("title or artist is empty")
+	}
+	endpoint := "/v1/search?q=track:" + url.QueryEscape(title) + "+artist:" + url.QueryEscape(artist) + "&type=track&limit=1&offset=1"
+	return endpoint, nil
+}
+func (s ServiceSpotify) CreateEndpointSpotifyPlaylistById(id string) (string, error) {
+	if id == "" {
+		return "", errors.New("id is empty")
+	}
+	endpoint := "/v1/playlists/" + id
+	return endpoint, nil
+}
+func (s ServiceSpotify) CreateEndpointSpotifyTrackById(id string) (string, error) {
+	if id == "" {
+		return "", errors.New("id  is empty")
+	}
+	endpoint := "/v1/tracks/" + id
+	return endpoint, nil
+}
+
 func (s ServiceSpotify) CreateRequest(method, endpoint string) (*http.Request, error) {
 	Url := s.BaseUrl + endpoint
 
@@ -19,7 +42,11 @@ func (s ServiceSpotify) CreateRequest(method, endpoint string) (*http.Request, e
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Authorization", "Bearer "+s.Token)
+	if s.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+s.Token)
+	} else {
+		return nil, errors.New("token is empty")
+	}
 
 	return req, nil
 }
@@ -29,8 +56,6 @@ func (s ServiceSpotify) doRequest(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return &http.Response{}, err
 	}
-
-	// Проверяем статус ответа
 	if resp.StatusCode != http.StatusOK {
 		return &http.Response{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
@@ -68,20 +93,27 @@ func (s ServiceSpotify) decodeRespPlaylistId(response *http.Response) (*domain.P
 	return &p, nil
 }
 func (s ServiceSpotify) decodeRespTrackByName(response *http.Response) (*domain.Song, error) {
-	var track spotifySongByName
+	var track spotifySongByMetadata
 	if err := json.NewDecoder(response.Body).Decode(&track); err != nil {
-		return nil, err
+		return nil, errors.New("cant decode song")
 	}
-
+	if len(track.Tracks.Items) == 0 {
+		return nil, errors.New(tg_handlers.ErrInvalidParamsSpotify)
+	}
+	if track.Tracks.Items[0].Name == "" || track.Tracks.Items[0].Artists[0].Name == "" || track.Tracks.Items[0].ExternalURL.Spotify == "" {
+		return nil, errors.New(tg_handlers.ErrInvalidParamsSpotify)
+	}
 	return &domain.Song{
 		Title:  track.Tracks.Items[0].Name,
 		Artist: track.Tracks.Items[0].Artists[0].Name,
 		Album:  track.Tracks.Items[0].Album.Name,
+		Link:   track.Tracks.Items[0].ExternalURL.Spotify,
 	}, nil
 }
 func ParseSpotifyIDFromURL(link string) (string, string, error) {
 	if strings.Contains(link, "https://open.spotify.com/track/") {
 		id := strings.Split(link, "https://open.spotify.com/track/")[1]
+
 		return "track", strings.Split(id, "?")[0], nil
 	}
 	if strings.Contains(link, "https://open.spotify.com/playlist/") {
