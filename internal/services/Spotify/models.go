@@ -17,7 +17,7 @@ type ServiceSpotify struct {
 	}
 }
 
-// spotifyTrackById, spotifyPlaylistById, spotifySongByName Структуры для работы с api
+// spotifyTrackById, spotifyPlaylistById, spotifySongByMetadata Структуры для работы с api
 type (
 	spotifyTrackById struct {
 		ID      string `json:"id"`
@@ -60,7 +60,7 @@ type (
 			Spotify string `json:"spotify"`
 		} `json:"external_urls"`
 	}
-	spotifySongByName struct {
+	spotifySongByMetadata struct {
 		Tracks struct {
 			Items []struct {
 				ID      string `json:"id"`

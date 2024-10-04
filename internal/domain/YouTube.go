@@ -2,9 +2,9 @@ package domain
 
 import "errors"
 
-//ProcessingYoutubeSongs
+//ProcessingYoutubeMediaById
 
-func (p *ProcessingYoutubeSongs) GetOrCreate(chatID int64) ProcessYouTubeSong {
+func (p *ProcessingYoutubeMediaById) GetOrCreate(chatID int64) ProcessYouTubeSong {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		return (*p)[idx]
 	}
@@ -16,7 +16,7 @@ func (p *ProcessingYoutubeSongs) GetOrCreate(chatID int64) ProcessYouTubeSong {
 	return NewProcess
 }
 
-func (p *ProcessingYoutubeSongs) AddSongID(songID string, chatID int64) error {
+func (p *ProcessingYoutubeMediaById) AddSongID(songID string, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		(*p)[idx].songId = songID
 		return nil
@@ -24,7 +24,7 @@ func (p *ProcessingYoutubeSongs) AddSongID(songID string, chatID int64) error {
 	return errors.New(ErrChatIDNotFound)
 }
 
-func (p *ProcessingYoutubeSongs) AddSong(song Song, chatID int64) error {
+func (p *ProcessingYoutubeMediaById) AddSong(song Song, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		(*p)[idx].song = song
 		return nil
@@ -32,7 +32,7 @@ func (p *ProcessingYoutubeSongs) AddSong(song Song, chatID int64) error {
 	return errors.New(ErrChatIDNotFound)
 }
 
-func (p *ProcessingYoutubeSongs) UpdateStep(step string, chatID int64) error {
+func (p *ProcessingYoutubeMediaById) UpdateStep(step string, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		(*p)[idx].step = step
 		return nil
@@ -40,7 +40,7 @@ func (p *ProcessingYoutubeSongs) UpdateStep(step string, chatID int64) error {
 	return errors.New(ErrChatIDNotFound)
 }
 
-func (p *ProcessingYoutubeSongs) Delete(chatID int64) error {
+func (p *ProcessingYoutubeMediaById) Delete(chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		*p = append((*p)[:idx], (*p)[idx+1:]...)
 		return nil

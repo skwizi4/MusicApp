@@ -5,27 +5,35 @@ import (
 	"MusicApp/internal/handlers"
 	"fmt"
 	"github.com/skwizi4/lib/ErrChan"
+	"github.com/skwizi4/lib/logs"
 	tg "gopkg.in/tucnak/telebot.v2"
+	"log"
 )
 
+const ErrProcessingFindSongByMetadata = "cant end processingFindSongByMetadata"
+const ErrInvalidParamsSpotify = "wrong request (invalid params for Spotify)"
+const ErrInvalidParamsYoutube = "wrong request (invalid params for Youtube)"
+
 type Handler struct {
-	bot                         *tg.Bot
-	spotifyHandler              handlers.Spotify
-	youtubeHandler              handlers.YouTube
-	errChannel                  *ErrChan.ErrorChannel
-	processingFinSongByMetadata domain.ProcessingFindSongByMetadata
+	bot                          *tg.Bot
+	spotifyHandler               handlers.Spotify
+	youtubeHandler               handlers.YouTube
+	errChannel                   *ErrChan.ErrorChannel
+	processingFindSongByMetadata *domain.ProcessingFindSongByMetadata
+	logger                       logs.GoLogger
 }
 
-func New(bot *tg.Bot, spotifyHandler handlers.Spotify, youtubeHandler handlers.YouTube, errChan *ErrChan.ErrorChannel) Handler {
+func New(bot *tg.Bot, spotifyHandler handlers.Spotify, youtubeHandler handlers.YouTube, processingFinSongByMetadata *domain.ProcessingFindSongByMetadata, errChan *ErrChan.ErrorChannel, logger logs.GoLogger) Handler {
 	return Handler{
-		bot:            bot,
-		spotifyHandler: spotifyHandler,
-		youtubeHandler: youtubeHandler,
-		errChannel:     errChan,
+		bot:                          bot,
+		spotifyHandler:               spotifyHandler,
+		youtubeHandler:               youtubeHandler,
+		errChannel:                   errChan,
+		logger:                       logger,
+		processingFindSongByMetadata: processingFinSongByMetadata,
 	}
 }
 
-// todo - Добавить в основной тгешный хендлер хендлера спотифая и ютуба, дописать запрос к ютубу после получения данных
 func (h Handler) SpotifySong(msg *tg.Message) {
 	err := h.spotifyHandler.GetSongByYoutubeLink(msg)
 	if err != nil {
@@ -46,7 +54,7 @@ func (h Handler) YouTubePlaylist(msg *tg.Message) {
 
 }
 func (h Handler) FindSong(msg *tg.Message) {
-	process := h.processingFinSongByMetadata.GetOrCreate(msg.Chat.ID)
+	process := h.processingFindSongByMetadata.GetOrCreate(msg.Chat.ID)
 	switch process.Step {
 	case domain.ProcessSpotifySongByMetadataStart:
 		err := h.GetMetadata(msg)
@@ -55,27 +63,86 @@ func (h Handler) FindSong(msg *tg.Message) {
 			return
 		}
 	case domain.ProcessSpotifySongByMetadataTitle:
+
+		err := h.GetMetadata(msg)
+		if err != nil {
+			h.errChannel.HandleError(err)
+			return
+		}
+	case domain.ProcessSpotifySongByMetadataArtist:
 		err := h.GetMetadata(msg)
 		if err != nil {
 			h.errChannel.HandleError(err)
 			return
 		}
 	case domain.ProcessSpotifySongByMetadataEnd:
-		spotifySong, err := h.spotifyHandler.GetSongByMetaData(&domain.MetaData{Title: process.Song.Title, Artist: process.Song.Artist})
-		if err != nil {
+		if err := h.processingFindSongByMetadata.AddArtist(msg.Chat.ID, msg.Text); err != nil {
 
 			h.errChannel.HandleError(err)
-			return
+			err = h.processingFindSongByMetadata.Delete(msg.Chat.ID)
+			if err != nil {
+				log.Fatal(ErrProcessingFindSongByMetadata)
+				return
+			}
+		}
+		if _, err := h.bot.Send(msg.Sender, "wait a second ...."); err != nil {
+			if err = h.processingFindSongByMetadata.Delete(msg.Chat.ID); err != nil {
+				h.errChannel.HandleError(err)
+				log.Fatal(ErrProcessingFindSongByMetadata)
+				return
+
+			}
+
+		}
+		process = h.processingFindSongByMetadata.GetOrCreate(msg.Chat.ID)
+		spotifySong, err := h.spotifyHandler.GetSongByMetaData(&domain.MetaData{Title: process.Song.Title, Artist: process.Song.Artist})
+		if err != nil {
+			fmt.Println("Errors", err.Error(), ErrInvalidParamsSpotify)
+			if err.Error() == ErrInvalidParamsSpotify {
+				if _, err = h.bot.Send(msg.Sender, fmt.Sprintf("Error: check input parameters. We cant find song with title: %s, and artist: %s ",
+					process.Song.Title, process.Song.Artist)); err != nil {
+					h.errChannel.HandleError(err)
+					if err = h.processingFindSongByMetadata.Delete(msg.Chat.ID); err != nil {
+						log.Fatal(ErrProcessingFindSongByMetadata)
+						return
+					}
+				}
+				h.errChannel.HandleError(err)
+				return
+			}
+
 		}
 		youtubeSong, err := h.youtubeHandler.GetSongByMetaData(&domain.MetaData{Title: process.Song.Title, Artist: process.Song.Artist})
 		if err != nil {
+			fmt.Println("Errors", err.Error(), ErrInvalidParamsYoutube)
+			if err.Error() == ErrInvalidParamsYoutube {
+				if _, err = h.bot.Send(msg.Sender, fmt.Sprintf("Error: check input parameters. We cant find song with title: %s, and artist: %s ",
+					process.Song.Title, process.Song.Artist)); err != nil {
+					h.errChannel.HandleError(err)
+					if err = h.processingFindSongByMetadata.Delete(msg.Chat.ID); err != nil {
+						log.Fatal(ErrProcessingFindSongByMetadata)
+						return
+					}
+				}
+				h.errChannel.HandleError(err)
+				return
+			}
+
+		}
+		SongPrint := fmt.Sprintf("Spotify song title: %s; \n Spotify song artist: %s; \n Spotify song link: %s; \n \n Youtube song title: %s;  \n Youtube song artist: %s; \n Youtube song link: %s.",
+			spotifySong.Artist, spotifySong.Title, spotifySong.Link, youtubeSong.Title, youtubeSong.Artist, youtubeSong.Link)
+		if _, err = h.bot.Send(msg.Sender, SongPrint); err != nil {
+			err = h.processingFindSongByMetadata.Delete(msg.Chat.ID)
+			if err != nil {
+				log.Fatal(ErrProcessingFindSongByMetadata)
+				return
+			}
 			h.errChannel.HandleError(err)
 			return
 		}
-		SongPrint := fmt.Sprintf("Spotify song title: %s \n Spotify song artist: %s , \n Spotify song link: %s \n \n Youtube song title: %s  \n Youtube song artist: %s \n Youtube song link: %s",
-			spotifySong.Artist, spotifySong.Title, spotifySong.Link, youtubeSong.Title, youtubeSong.Artist, youtubeSong.Link)
-		if _, err := h.bot.Send(msg.Sender, SongPrint); err != nil {
-			h.errChannel.HandleError(err)
+		err = h.processingFindSongByMetadata.Delete(msg.Chat.ID)
+		if err != nil {
+			log.Fatal(ErrProcessingFindSongByMetadata)
 			return
 		}
 	}

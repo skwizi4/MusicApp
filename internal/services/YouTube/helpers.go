@@ -2,6 +2,7 @@ package YouTube
 
 import (
 	"MusicApp/internal/domain"
+	"MusicApp/internal/tg_handlers"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -93,6 +94,12 @@ func DecodeRespMediaByMetadata(body *io.ReadCloser) (*domain.Song, error) {
 	var Media youtubeMediaByMetadata
 	if err := json.NewDecoder(*body).Decode(&Media); err != nil {
 		return nil, errors.New("can't decode response")
+	}
+	if len(Media.Items) == 0 {
+		return nil, errors.New(tg_handlers.ErrInvalidParamsYoutube)
+	}
+	if Media.Items[0].Snippet.Title == "" || Media.Items[0].Snippet.ChanelName == "" || Media.Items[0].Id.VideoId == "" {
+		return nil, errors.New(tg_handlers.ErrInvalidParamsYoutube)
 	}
 	return &domain.Song{
 		Title:  Media.Items[0].Snippet.Title,

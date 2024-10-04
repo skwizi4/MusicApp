@@ -6,12 +6,12 @@ import (
 )
 
 func (h Handler) GetMetadata(msg *tg.Message) error {
-	process := h.processingFinSongByMetadata.GetOrCreate(msg.Chat.ID)
+	process := h.processingFindSongByMetadata.GetOrCreate(msg.Chat.ID)
 
 	switch process.Step {
 	case domain.ProcessSpotifySongByMetadataStart:
 		if _, err := h.bot.Send(msg.Sender, "Send Title of song that you wanna find"); err != nil {
-			if err = h.processingFinSongByMetadata.Delete(msg.Chat.ID); err != nil {
+			if err = h.processingFindSongByMetadata.Delete(msg.Chat.ID); err != nil {
 				h.errChannel.HandleError(err)
 				return err
 			}
@@ -19,22 +19,23 @@ func (h Handler) GetMetadata(msg *tg.Message) error {
 
 			return err
 		}
-		if err := h.processingFinSongByMetadata.UpdateStep(domain.ProcessSpotifySongByMetadataTitle, msg.Chat.ID); err != nil {
+		if err := h.processingFindSongByMetadata.UpdateStep(domain.ProcessSpotifySongByMetadataTitle, msg.Chat.ID); err != nil {
 			h.errChannel.HandleError(err)
 			return err
 		}
+
 	case domain.ProcessSpotifySongByMetadataTitle:
 
-		if err := h.processingFinSongByMetadata.AddTitle(msg.Chat.ID, msg.Text); err != nil {
+		if err := h.processingFindSongByMetadata.AddTitle(msg.Chat.ID, msg.Text); err != nil {
 			h.errChannel.HandleError(err)
 		}
 		if _, err := h.bot.Send(msg.Sender, "Send Artist of song that you wanna find"); err != nil {
-			if err = h.processingFinSongByMetadata.Delete(msg.Chat.ID); err != nil {
+			if err = h.processingFindSongByMetadata.Delete(msg.Chat.ID); err != nil {
 				h.errChannel.HandleError(err)
 			}
 			h.errChannel.HandleError(err)
 		}
-		if err := h.processingFinSongByMetadata.UpdateStep(domain.ProcessSpotifySongByMetadataEnd, msg.Chat.ID); err != nil {
+		if err := h.processingFindSongByMetadata.UpdateStep(domain.ProcessSpotifySongByMetadataEnd, msg.Chat.ID); err != nil {
 			h.errChannel.HandleError(err)
 			return err
 		}
