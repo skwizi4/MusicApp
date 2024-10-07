@@ -4,9 +4,9 @@ import (
 	"errors"
 )
 
-//ProcessingSpotifySongsByID
+//ProcessingYoutubeMediaBySpotifySongID
 
-func (p *ProcessingSpotifySongsByID) GetOrCreate(chatID int64) ProcessSpotifySong {
+func (p *ProcessingYoutubeMediaBySpotifySongID) GetOrCreate(chatID int64) ProcessSpotifySong {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		return (*p)[idx]
 	}
@@ -17,7 +17,7 @@ func (p *ProcessingSpotifySongsByID) GetOrCreate(chatID int64) ProcessSpotifySon
 	*p = append(*p, NewProcess)
 	return NewProcess
 }
-func (p *ProcessingSpotifySongsByID) IfExist(chatID int64) bool {
+func (p *ProcessingYoutubeMediaBySpotifySongID) IfExist(chatID int64) bool {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		return true
 	}
@@ -25,14 +25,14 @@ func (p *ProcessingSpotifySongsByID) IfExist(chatID int64) bool {
 
 }
 
-func (p *ProcessingSpotifySongsByID) UpdateStep(step string, chatID int64) error {
+func (p *ProcessingYoutubeMediaBySpotifySongID) UpdateStep(step string, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		(*p)[idx].Step = step
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)
 }
-func (p *ProcessingSpotifySongsByID) Delete(chatID int64) error {
+func (p *ProcessingYoutubeMediaBySpotifySongID) Delete(chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		*p = append((*p)[:idx], (*p)[idx+1:]...)
 		return nil

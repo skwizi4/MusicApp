@@ -2,7 +2,9 @@ package tg_handlers
 
 import (
 	"MusicApp/internal/domain"
+	"fmt"
 	tg "gopkg.in/tucnak/telebot.v2"
+	"log"
 )
 
 func (h Handler) GetMetadata(msg *tg.Message) error {
@@ -42,4 +44,17 @@ func (h Handler) GetMetadata(msg *tg.Message) error {
 
 	}
 	return nil
+}
+
+func (h Handler) HelpOut(msg *tg.Message) {
+	formatString := fmt.Sprintf("			Commands: \n" +
+		"	/FindSong - search songs in youtube and spotify by track metadata ( track title and artist) \n" +
+		"	/SpotifySong - search song in spotify by youtube link of this track \n" +
+		"	/YoutubeSong - search track in youtube by spotify link of this track \n " +
+		"	/SpotifyPlaylist - search and fill spotify playlist by link of the playlist from youtube \n" +
+		"	/YoutubePlaylist - search and fill youtube playlist by link of the playlist from spotify \n")
+	if _, err := h.bot.Send(msg.Sender, formatString); err != nil {
+		log.Fatal(err)
+	}
+
 }

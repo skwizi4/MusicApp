@@ -70,7 +70,3 @@ func TestServiceYouTube_FillYoutubePlaylist(t *testing.T) {
 	fmt.Println(playlist)
 
 }
-func Test_AuthLink(t *testing.T) {
-	fmt.Println("https://accounts.google.com/o/oauth2/v2/auth?client_id=849659818253-ipma7q7b7u48e6nuc1tlas2v0tam9aaa.apps.googleusercontent.com&" +
-		"redirect_uri=http://localhost:8080/auth/google/callback&response_type=code&scope=https://www.googleapis.com/auth/youtube&access_type=offline&state=telegramId")
-}

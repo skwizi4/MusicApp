@@ -2,45 +2,44 @@ package domain
 
 import "errors"
 
-//ProcessingYoutubeMediaById
+//ProcessingSpotifySongByYoutubeMediaId
 
-func (p *ProcessingYoutubeMediaById) GetOrCreate(chatID int64) ProcessYouTubeSong {
+func (p *ProcessingSpotifySongByYoutubeMediaId) GetOrCreate(chatID int64) ProcessYouTubeSong {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		return (*p)[idx]
 	}
 	NewProcess := ProcessYouTubeSong{
-		chatID: chatID,
-		step:   ProcessYouTubeSongStart,
+		ChatID: chatID,
+		Step:   ProcessSpotifySongByYouTubeMediaStart,
 	}
 	*p = append(*p, NewProcess)
 	return NewProcess
 }
 
-func (p *ProcessingYoutubeMediaById) AddSongID(songID string, chatID int64) error {
+func (p *ProcessingSpotifySongByYoutubeMediaId) IfExist(chatID int64) bool {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].songId = songID
+		return true
+	}
+	return false
+}
+
+func (p *ProcessingSpotifySongByYoutubeMediaId) AddSong(song Song, chatID int64) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].Song = song
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)
 }
 
-func (p *ProcessingYoutubeMediaById) AddSong(song Song, chatID int64) error {
+func (p *ProcessingSpotifySongByYoutubeMediaId) UpdateStep(step string, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].song = song
+		(*p)[idx].Step = step
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)
 }
 
-func (p *ProcessingYoutubeMediaById) UpdateStep(step string, chatID int64) error {
-	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].step = step
-		return nil
-	}
-	return errors.New(ErrChatIDNotFound)
-}
-
-func (p *ProcessingYoutubeMediaById) Delete(chatID int64) error {
+func (p *ProcessingSpotifySongByYoutubeMediaId) Delete(chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		*p = append((*p)[:idx], (*p)[idx+1:]...)
 		return nil

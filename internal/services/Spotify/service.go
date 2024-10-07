@@ -3,7 +3,6 @@ package Spotify
 import (
 	"MusicApp/internal/config"
 	"MusicApp/internal/domain"
-	"errors"
 	logger "github.com/skwizi4/lib/logs"
 	"net/http"
 )
@@ -20,10 +19,7 @@ func NewSpotifyService(cfg config.Config) ServiceSpotify {
 }
 
 func (s ServiceSpotify) GetSpotifyTrackById(link string) (*domain.Song, error) {
-	isTrack, id, err := ParseSpotifyIDFromURL(link)
-	if isTrack == "playlist" {
-		return nil, errors.New("invalid link, its link of playlist")
-	}
+	id, err := GetID(link)
 
 	if err != nil {
 		return nil, err
@@ -36,12 +32,7 @@ func (s ServiceSpotify) GetSpotifyTrackById(link string) (*domain.Song, error) {
 		return nil, err
 	}
 
-	req, err := s.CreateRequest(http.MethodGet, endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := s.doRequest(req)
+	resp, err := s.createAndExecuteRequest(http.MethodGet, endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -57,10 +48,8 @@ func (s ServiceSpotify) GetSpotifyTrackById(link string) (*domain.Song, error) {
 
 // GetSpotifyPlaylistById todo - Check bugs
 func (s ServiceSpotify) GetSpotifyPlaylistById(link string) (*domain.Playlist, error) {
-	isPlaylist, id, err := ParseSpotifyIDFromURL(link)
-	if isPlaylist == "track" {
-		return nil, errors.New("invalid link, its link of track")
-	}
+	id, err := GetID(link)
+
 	if err != nil {
 		return nil, err
 	}
@@ -72,11 +61,7 @@ func (s ServiceSpotify) GetSpotifyPlaylistById(link string) (*domain.Playlist, e
 	if err != nil {
 		return nil, err
 	}
-	req, err := s.CreateRequest(http.MethodGet, endpoint)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := s.doRequest(req)
+	resp, err := s.createAndExecuteRequest(http.MethodGet, endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -97,12 +82,7 @@ func (s ServiceSpotify) GetSpotifyTrackByMetadata(data domain.MetaData) (*domain
 	if err = s.RequestToken(); err != nil {
 		return nil, err
 	}
-	req, err := s.CreateRequest(http.MethodGet, endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := s.doRequest(req)
+	resp, err := s.createAndExecuteRequest(http.MethodGet, endpoint)
 	if err != nil {
 		return nil, err
 	}

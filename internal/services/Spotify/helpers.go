@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -34,37 +35,43 @@ func (s ServiceSpotify) CreateEndpointSpotifyTrackById(id string) (string, error
 	endpoint := "/v1/tracks/" + id
 	return endpoint, nil
 }
-
-func (s ServiceSpotify) CreateRequest(method, endpoint string) (*http.Request, error) {
+func (s ServiceSpotify) createAndExecuteRequest(method, endpoint string) (*io.ReadCloser, error) {
 	Url := s.BaseUrl + endpoint
-
 	req, err := http.NewRequest(method, Url, nil)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(s.Token)
 	if s.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+s.Token)
 	} else {
 		return nil, errors.New("token is empty")
 	}
-
-	return req, nil
-}
-func (s ServiceSpotify) doRequest(req *http.Request) (*http.Response, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return &http.Response{}, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return &http.Response{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-	return resp, nil
-}
-func (s ServiceSpotify) decodeRespTrackById(response *http.Response) (*domain.Song, error) {
-	var track spotifyTrackById
-	if err := json.NewDecoder(response.Body).Decode(&track); err != nil {
 		return nil, err
+	}
+	//body, err := io.ReadAll(resp.Body)
+	//if err != nil {
+	//	return nil, err
+	//
+	//}
+	//fmt.Println(string(body))
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return &resp.Body, nil
+}
+
+func (s ServiceSpotify) decodeRespTrackById(body *io.ReadCloser) (*domain.Song, error) {
+	var track spotifyTrackById
+	if err := json.NewDecoder(*body).Decode(&track); err != nil {
+		return nil, err
+	}
+	if &track == nil {
+		return nil, errors.New("error in decoding song response")
 	}
 
 	return &domain.Song{
@@ -73,9 +80,9 @@ func (s ServiceSpotify) decodeRespTrackById(response *http.Response) (*domain.So
 		Album:  track.Album.Name,
 	}, nil
 }
-func (s ServiceSpotify) decodeRespPlaylistId(response *http.Response) (*domain.Playlist, error) {
+func (s ServiceSpotify) decodeRespPlaylistId(body *io.ReadCloser) (*domain.Playlist, error) {
 	var playlist spotifyPlaylistById
-	if err := json.NewDecoder(response.Body).Decode(&playlist); err != nil {
+	if err := json.NewDecoder(*body).Decode(&playlist); err != nil {
 		return nil, err
 	}
 	var p domain.Playlist
@@ -92,9 +99,10 @@ func (s ServiceSpotify) decodeRespPlaylistId(response *http.Response) (*domain.P
 	}
 	return &p, nil
 }
-func (s ServiceSpotify) decodeRespTrackByName(response *http.Response) (*domain.Song, error) {
+func (s ServiceSpotify) decodeRespTrackByName(body *io.ReadCloser) (*domain.Song, error) {
+
 	var track spotifySongByMetadata
-	if err := json.NewDecoder(response.Body).Decode(&track); err != nil {
+	if err := json.NewDecoder(*body).Decode(&track); err != nil {
 		return nil, errors.New("cant decode song")
 	}
 	if len(track.Tracks.Items) == 0 {
@@ -110,69 +118,95 @@ func (s ServiceSpotify) decodeRespTrackByName(response *http.Response) (*domain.
 		Link:   track.Tracks.Items[0].ExternalURL.Spotify,
 	}, nil
 }
-func ParseSpotifyIDFromURL(link string) (string, string, error) {
-	if strings.Contains(link, "https://open.spotify.com/track/") {
-		id := strings.Split(link, "https://open.spotify.com/track/")[1]
 
-		return "track", strings.Split(id, "?")[0], nil
+func GetID(url string) (string, error) {
+	re := regexp.MustCompile(`^https://open\.spotify\.com/track/([^?]+)`)
+	matches := re.FindStringSubmatch(url)
+
+	if len(matches) < 2 {
+		re = regexp.MustCompile(`^^https://open\.spotify\.com/playlist/([^?]+)`)
+		matches = re.FindStringSubmatch(url)
+		if len(matches) < 2 {
+			return "", errors.New("YouTube URL Not Found")
+		}
+		return matches[1], nil
 	}
-	if strings.Contains(link, "https://open.spotify.com/playlist/") {
-		id := strings.Split(link, "https://open.spotify.com/playlist/")[1]
-		return "playlist", strings.Split(id, "?")[0], nil
-	}
-	return "", "", errors.New("can't parse ID, invalid URL format")
+
+	return matches[1], nil
 }
 
+//func ParseSpotifyIDFromURL(link string) (string, string, error) {
+//
+//	if strings.Contains(link, "https://open.spotify.com/track/") {
+//		id := strings.Split(link, "https://open.spotify.com/track/")[1]
+//
+//		return "track", strings.Split(id, "?")[0], nil
+//	}
+//	if strings.Contains(link, "https://open.spotify.com/playlist/") {
+//		id := strings.Split(link, "https://open.spotify.com/playlist/")[1]
+//		return "playlist", strings.Split(id, "?")[0], nil
+//	}
+//	return "", "", errors.New("can't parse ID, invalid URL format")
+//}
+
+// Request Auth Token
+
 func (s *ServiceSpotify) RequestToken() error {
-	tokenData := url.Values{}
-	tokenData.Set("grant_type", "client_credentials")
-
-	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", strings.NewReader(tokenData.Encode()))
+	req, err := s.buildRequest()
 	if err != nil {
-		s.Logger.ErrorFrmt("failed to create request: ", err)
-		return fmt.Errorf("failed to create request: %w", err)
+		return err
 	}
-
-	authHeader := base64.StdEncoding.EncodeToString([]byte(s.ClientId + ":" + s.ClientSecret))
-	req.Header.Add("Authorization", "Basic "+authHeader)
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		s.Logger.ErrorFrmt("failed to execute request: ", err)
 		return fmt.Errorf("failed to execute request: %w", err)
 	}
 	defer func(Body io.ReadCloser) {
-		err := Body.Close()
+		err = Body.Close()
 		if err != nil {
 
 		}
 	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		s.Logger.ErrorFrmt("unexpected status code: ", resp.StatusCode)
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
-
-	body, err := io.ReadAll(resp.Body)
+	err = s.extractToken(resp.Body)
 	if err != nil {
-		s.Logger.ErrorFrmt("failed to read response body: ", err)
+		return err
+	}
+
+	return nil
+}
+func (s *ServiceSpotify) buildRequest() (*http.Request, error) {
+	tokenData := url.Values{}
+	tokenData.Set("grant_type", "client_credentials")
+
+	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", strings.NewReader(tokenData.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	authHeader := base64.StdEncoding.EncodeToString([]byte(s.ClientId + ":" + s.ClientSecret))
+	req.Header.Add("Authorization", "Basic "+authHeader)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	return req, nil
+}
+func (s *ServiceSpotify) extractToken(body io.ReadCloser) error {
+	data, err := io.ReadAll(body)
+	if err != nil {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	var tokenResponse map[string]interface{}
-	if err := json.Unmarshal(body, &tokenResponse); err != nil {
-		s.Logger.ErrorFrmt("failed to unmarshal response: ", err)
+	if err = json.Unmarshal(data, &tokenResponse); err != nil {
 		return fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
 	token, ok := tokenResponse["access_token"].(string)
 	if !ok {
-		s.Logger.Error("access_token not found in response")
 		return fmt.Errorf("access_token not found in response")
 	}
-
 	s.Token = token
-
 	return nil
 }
