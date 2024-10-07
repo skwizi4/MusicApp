@@ -33,7 +33,7 @@ func New(bot *tg.Bot, cfg config.Config, processingYoutubeSongsById *domain.Proc
 	}
 }
 
-func (h Handler) GetSongBySpotifyLink(msg *tg.Message) error {
+func (h Handler) GetSongByYoutubeLink(msg *tg.Message) error {
 	return nil
 }
 
