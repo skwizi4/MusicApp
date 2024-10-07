@@ -8,15 +8,15 @@ import (
 // todo - Написать структуры: MetaData, Song, Playlist ( directory - domain)
 
 type (
-	Spotify interface {
-		GetSongByYoutubeLink(msg *tg.Message) error
+	Youtube interface {
+		GetMediaBySpotifyLink(msg *tg.Message) error
 		GetSongByMetaData(metadata *domain.MetaData) (*domain.Song, error)
 		GetPlaylistByYoutubeLink(youtubeLink string) (*domain.Playlist, error)
 		GetPlaylistByMetaData(metadata domain.MetaData) (*domain.Playlist, error)
 	}
 
-	YouTube interface {
-		GetSongBySpotifyLink(msg *tg.Message) error
+	Spotify interface {
+		GetSpotifySongByYoutubeLink(msg *tg.Message) error
 		GetSongByMetaData(metadata *domain.MetaData) (*domain.Song, error)
 		GetPlaylistBySpotifyLink(spotifyLink string) (*domain.Playlist, error)
 		GetPlaylistByMetaData(metadata domain.MetaData) (*domain.Playlist, error)

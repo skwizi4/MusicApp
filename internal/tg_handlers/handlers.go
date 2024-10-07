@@ -16,42 +16,40 @@ const ErrInvalidParamsYoutube = "wrong request (invalid params for Youtube)"
 
 type Handler struct {
 	bot                          *tg.Bot
+	youtubeHandler               handlers.Youtube
 	spotifyHandler               handlers.Spotify
-	youtubeHandler               handlers.YouTube
 	errChannel                   *ErrChan.ErrorChannel
 	processingFindSongByMetadata *domain.ProcessingFindSongByMetadata
 	logger                       logs.GoLogger
 }
 
-func New(bot *tg.Bot, spotifyHandler handlers.Spotify, youtubeHandler handlers.YouTube, processingFinSongByMetadata *domain.ProcessingFindSongByMetadata, errChan *ErrChan.ErrorChannel, logger logs.GoLogger) Handler {
+func New(bot *tg.Bot, youtubeHandler handlers.Youtube, spotifyHandler handlers.Spotify, processingFinSongByMetadata *domain.ProcessingFindSongByMetadata, errChan *ErrChan.ErrorChannel, logger logs.GoLogger) Handler {
 	return Handler{
 		bot:                          bot,
-		spotifyHandler:               spotifyHandler,
 		youtubeHandler:               youtubeHandler,
+		spotifyHandler:               spotifyHandler,
 		errChannel:                   errChan,
 		logger:                       logger,
 		processingFindSongByMetadata: processingFinSongByMetadata,
 	}
 }
 
+func (h Handler) YoutubeSong(msg *tg.Message) {
+	err := h.youtubeHandler.GetMediaBySpotifyLink(msg)
+	if err != nil {
+		h.errChannel.HandleError(err)
+	}
+
+}
 func (h Handler) SpotifySong(msg *tg.Message) {
-	err := h.spotifyHandler.GetSongByYoutubeLink(msg)
+	err := h.spotifyHandler.GetSpotifySongByYoutubeLink(msg)
 	if err != nil {
 		h.errChannel.HandleError(err)
 	}
 
 }
 func (h Handler) Help(msg *tg.Message) {
-
-}
-func (h Handler) YouTubeSong(msg *tg.Message) {
-
-}
-func (h Handler) SpotifyPlaylist(msg *tg.Message) {
-
-}
-func (h Handler) YouTubePlaylist(msg *tg.Message) {
-
+	h.HelpOut(msg)
 }
 func (h Handler) FindSong(msg *tg.Message) {
 	process := h.processingFindSongByMetadata.GetOrCreate(msg.Chat.ID)
@@ -97,15 +95,16 @@ func (h Handler) FindSong(msg *tg.Message) {
 		process = h.processingFindSongByMetadata.GetOrCreate(msg.Chat.ID)
 		spotifySong, err := h.spotifyHandler.GetSongByMetaData(&domain.MetaData{Title: process.Song.Title, Artist: process.Song.Artist})
 		if err != nil {
-			fmt.Println("Errors", err.Error(), ErrInvalidParamsSpotify)
 			if err.Error() == ErrInvalidParamsSpotify {
 				if _, err = h.bot.Send(msg.Sender, fmt.Sprintf("Error: check input parameters. We cant find song with title: %s, and artist: %s ",
 					process.Song.Title, process.Song.Artist)); err != nil {
-					h.errChannel.HandleError(err)
 					if err = h.processingFindSongByMetadata.Delete(msg.Chat.ID); err != nil {
 						log.Fatal(ErrProcessingFindSongByMetadata)
-						return
 					}
+					h.errChannel.HandleError(err)
+				}
+				if err = h.processingFindSongByMetadata.Delete(msg.Chat.ID); err != nil {
+					log.Fatal(ErrProcessingFindSongByMetadata)
 				}
 				h.errChannel.HandleError(err)
 				return
@@ -114,7 +113,6 @@ func (h Handler) FindSong(msg *tg.Message) {
 		}
 		youtubeSong, err := h.youtubeHandler.GetSongByMetaData(&domain.MetaData{Title: process.Song.Title, Artist: process.Song.Artist})
 		if err != nil {
-			fmt.Println("Errors", err.Error(), ErrInvalidParamsYoutube)
 			if err.Error() == ErrInvalidParamsYoutube {
 				if _, err = h.bot.Send(msg.Sender, fmt.Sprintf("Error: check input parameters. We cant find song with title: %s, and artist: %s ",
 					process.Song.Title, process.Song.Artist)); err != nil {
@@ -146,5 +144,12 @@ func (h Handler) FindSong(msg *tg.Message) {
 			return
 		}
 	}
+
+}
+
+func (h Handler) SpotifyPlaylist(msg *tg.Message) {
+
+}
+func (h Handler) YouTubePlaylist(msg *tg.Message) {
 
 }

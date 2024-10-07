@@ -18,8 +18,8 @@ const (
 	ProcessSpotifyPlaylistStart = "ProcessSpotifyPlaylistStart"
 	ProcessSpotifyPlaylistEnd   = "ProcessSpotifyPlaylistEnd"
 
-	ProcessYouTubeSongStart = "ProcessYouTubeSongStart"
-	ProcessYouTubeSongEnd   = "ProcessYouTubeSongEnd"
+	ProcessSpotifySongByYouTubeMediaStart = "ProcessSpotifySongByYouTubeMediaStart"
+	ProcessSpotifySongByYouTubeMediaEnd   = "ProcessSpotifySongByYouTubeMediaEnd"
 
 	ProcessYouTubePlaylistStart = "ProcessYouTubePlaylistStart"
 	ProcessYouTubePlaylistEnd   = "ProcessYouTubePlaylistEnd"
@@ -72,15 +72,18 @@ type Playlist struct {
 	NextPageToken string
 }
 
+// Spotify domain
+
 // ProcessSpotifySong - Structure of handler "spotifyHandler";
 // + process for many users and some methods
+// todo - check songId
 type ProcessSpotifySong struct {
 	SongId string
 	Song   Song
 	ChatID int64
 	Step   string
 }
-type ProcessingSpotifySongsByID []ProcessSpotifySong
+type ProcessingYoutubeMediaBySpotifySongID []ProcessSpotifySong
 
 type ProcessSpotifyPlaylist struct {
 	chatID   int64
@@ -90,13 +93,14 @@ type ProcessSpotifyPlaylist struct {
 }
 type ProcessingSpotifyPlaylists []ProcessSpotifyPlaylist
 
+// YouTube domain
+
 type ProcessYouTubeSong struct {
-	chatID int64
-	songId string
-	song   Song
-	step   string
+	ChatID int64
+	Song   Song
+	Step   string
 }
-type ProcessingYoutubeMediaById []ProcessYouTubeSong
+type ProcessingSpotifySongByYoutubeMediaId []ProcessYouTubeSong
 
 type ProcessYoutubePlaylist struct {
 	title  string
@@ -111,6 +115,9 @@ type ProcessFindSong struct {
 	metadata MetaData
 	step     string
 }
+
+// both
+
 type ProcessingFindSongs []ProcessFindSong
 
 //todo - refactor

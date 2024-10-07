@@ -25,11 +25,11 @@ type App struct {
 	logger                     logger.GoLogger
 	validator                  *validator.Validate
 	mongo                      *MongoDB.MongoDB
-	spotifyHandler             handlers.Spotify
-	youtubeHandler             handlers.YouTube
+	spotifyHandler             handlers.Youtube
+	youtubeHandler             handlers.Spotify
 	telegramHandler            tg_handlers.Handler
-	processingSpotifySongsById domain.ProcessingSpotifySongsByID
-	processingYoutubeMediaById domain.ProcessingYoutubeMediaById
+	processingSpotifySongsById domain.ProcessingYoutubeMediaBySpotifySongID
+	processingYoutubeMediaById domain.ProcessingSpotifySongByYoutubeMediaId
 	processingSongsByMetadata  domain.ProcessingFindSongByMetadata
 }
 
@@ -128,31 +128,37 @@ func (a *App) InitHandlers() {
 
 // ListenTgBot - todo - отредактировать хендлера под задачи
 func (a *App) ListenTgBot() {
+	go a.bot.Handle("/YoutubeSong", func(msg *tg.Message) { // Completed
+		go a.telegramHandler.YoutubeSong(msg)
+	})
 	go a.bot.Handle("/SpotifySong", func(msg *tg.Message) {
 		go a.telegramHandler.SpotifySong(msg)
 	})
-	go a.bot.Handle("SpotifyPlaylist", func(msg *tg.Message) {
-		go a.telegramHandler.SpotifyPlaylist(msg)
-	})
-	go a.bot.Handle("/Help", func(msg *tg.Message) {
+	go a.bot.Handle("/Help", func(msg *tg.Message) { //  Completed
 		go a.telegramHandler.Help(msg)
-	})
-	go a.bot.Handle("/YoutubeSong", func(msg *tg.Message) {
-		go a.telegramHandler.YouTubeSong(msg)
-	})
-	go a.bot.Handle("/YoutubePlaylist", func(msg *tg.Message) {
-		go a.telegramHandler.YouTubePlaylist(msg)
 	})
 	go a.bot.Handle("/FindSong", func(msg *tg.Message) {
 		go a.telegramHandler.FindSong(msg)
 	})
+	go a.bot.Handle("/SpotifyPlaylist", func(msg *tg.Message) {
+		go a.telegramHandler.SpotifyPlaylist(msg)
+	})
+
+	go a.bot.Handle("/YoutubePlaylist", func(msg *tg.Message) {
+		go a.telegramHandler.YouTubePlaylist(msg)
+	})
+
 	a.bot.Handle(tg.OnText, func(msg *tg.Message) {
 		switch {
 		case a.processingSpotifySongsById.IfExist(msg.Chat.ID):
-			go a.telegramHandler.SpotifySong(msg)
+			go a.telegramHandler.YoutubeSong(msg)
 		case a.processingSongsByMetadata.IfExist(msg.Chat.ID):
+
 			go a.telegramHandler.FindSong(msg)
+		case a.processingYoutubeMediaById.IfExist(msg.Chat.ID):
+			go a.telegramHandler.SpotifySong(msg)
 		}
+
 	})
 	a.bot.Start()
 	defer a.bot.Stop()

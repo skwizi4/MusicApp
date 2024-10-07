@@ -23,23 +23,23 @@ func NewYouTubeService(cfg config.Config) ServiceYouTube {
 
 // GetYoutubeMediaByID Tested - Tested(OK)
 func (y ServiceYouTube) GetYoutubeMediaByID(link string) (*domain.Song, error) {
-	song := &domain.Song{}
+
 	id, err := GetID(link)
 	if err != nil {
-		return song, err
+		return nil, err
 	}
 
 	endpoint, err := y.CreateEndpointYoutubeMediaById(id)
 	if err != nil {
-		return song, err
+		return nil, err
 	}
 	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint)
 	if err != nil {
-		return song, err
+		return nil, err
 	}
-	song, err = DecodeRespMediaById(resp)
+	song, err := DecodeRespMediaById(resp)
 	if err != nil {
-		return song, err
+		return nil, err
 	}
 
 	return song, nil
@@ -93,20 +93,19 @@ func (y ServiceYouTube) GetYoutubePlaylistByID(link string) (*domain.Playlist, e
 
 // GetYoutubeMediaByMetadata - Tested(OK)
 func (y ServiceYouTube) GetYoutubeMediaByMetadata(data domain.MetaData) (*domain.Song, error) {
-	song := &domain.Song{}
 	endpoint, err := y.CreateEndpointYoutubeMediaByMetadata(data)
 	if err != nil {
-		return song, err
+		return nil, err
 	}
 
 	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint)
 	if err != nil {
-		return song, err
+		return nil, err
 	}
 
-	song, err = DecodeRespMediaByMetadata(resp)
+	song, err := DecodeRespMediaByMetadata(resp)
 	if err != nil {
-		return song, err
+		return nil, err
 	}
 	return song, nil
 }
