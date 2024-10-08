@@ -134,7 +134,7 @@ func (a *App) ListenTgBot() {
 	go a.bot.Handle("/SpotifySong", func(msg *tg.Message) {
 		go a.telegramHandler.SpotifySong(msg)
 	})
-	go a.bot.Handle("/Help", func(msg *tg.Message) { //  Completed
+	go a.bot.Handle("/Help", func(msg *tg.Message) { //  Completed, todo -refactor
 		go a.telegramHandler.Help(msg)
 	})
 	go a.bot.Handle("/FindSong", func(msg *tg.Message) {
