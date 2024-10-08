@@ -3,15 +3,14 @@ package Spotify
 import (
 	"MusicApp/internal/config"
 	"MusicApp/internal/domain"
+	"MusicApp/internal/errors"
 	"MusicApp/internal/services"
 	"MusicApp/internal/services/Spotify"
 	YouTubeService "MusicApp/internal/services/YouTube"
-	"errors"
 	"fmt"
 	"github.com/skwizi4/lib/ErrChan"
 	"github.com/skwizi4/lib/logs"
 	tg "gopkg.in/tucnak/telebot.v2"
-	"log"
 )
 
 type Handler struct {
@@ -43,44 +42,43 @@ func (h Handler) GetMediaBySpotifyLink(msg *tg.Message) error {
 
 	switch process.Step {
 	case domain.ProcessSpotifySongByIdStart:
-		if _, err := h.bot.Send(msg.Sender, "Send link of song that you wanna find"); err != nil {
-			log.Fatal("err in tg.bot :", err)
-		}
+		h.SendMsg(msg, "Send link of song that you wanna find")
 		if err := h.ProcessingYoutubeMediaBySpotifySongID.UpdateStep(domain.ProcessSpotifySongByIdEnd, msg.Chat.ID); err != nil {
-			log.Fatal("err in domain :", err)
+			h.SendMsg(msg, errors.ErrTryAgain)
+			h.DeleteProcess(msg)
+			return err
 		}
 	case domain.ProcessSpotifySongByIdEnd:
+		if msg.Text == "/exit" {
+			h.SendMsg(msg, "Process stopped")
+			h.DeleteProcess(msg)
+			return nil
+		}
 		track, err := h.spotifyService.GetSpotifyTrackById(msg.Text)
 		if err != nil {
-			h.errChannel.HandleError(err)
-			if _, err = h.bot.Send(msg.Sender, "Error"); err != nil {
-				log.Fatal(err, errors.New("error in tg.bot"))
+			if err.Error() == errors.ErrInvalidParamsSpotify {
+				h.SendMsg(msg, errors.ErrInvalidParamsSpotify)
+				h.DeleteProcess(msg)
+				return err
 			}
-			if err = h.ProcessingYoutubeMediaBySpotifySongID.Delete(msg.Chat.ID); err != nil {
-				log.Fatal(err, errors.New("error in domain"))
-			}
-
+			h.SendMsg(msg, errors.ErrTryAgain)
+			h.DeleteProcess(msg)
 			return err
 		}
 		song, err := h.youtubeService.GetYoutubeMediaByMetadata(domain.MetaData{Title: track.Title, Artist: track.Artist})
 		if err != nil {
-			h.errChannel.HandleError(err)
-			if _, err = h.bot.Send(msg.Sender, "Error"); err != nil {
-				log.Fatal(err, errors.New("error in tg.bot"))
-
+			if err.Error() == errors.ErrInvalidParamsYoutube {
+				h.SendMsg(msg, errors.ErrInvalidParamsYoutube)
+				h.DeleteProcess(msg)
+				return err
 			}
-			if err = h.ProcessingYoutubeMediaBySpotifySongID.Delete(msg.Chat.ID); err != nil {
-				log.Fatal(err, errors.New("error in domain"))
-			}
+			h.SendMsg(msg, errors.ErrTryAgain)
+			h.DeleteProcess(msg)
 			return err
 		}
 		SongPrint := fmt.Sprintf("Song Title: %s \n Song Artist: %s , \n Song link: %s", song.Artist, song.Title, song.Link)
-		if _, err = h.bot.Send(msg.Sender, SongPrint); err != nil {
-			log.Fatal(err)
-		}
-		if err = h.ProcessingYoutubeMediaBySpotifySongID.Delete(msg.Chat.ID); err != nil {
-			log.Fatal(err)
-		}
+		h.SendMsg(msg, SongPrint)
+		h.DeleteProcess(msg)
 
 	}
 	return nil

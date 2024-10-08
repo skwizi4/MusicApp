@@ -78,10 +78,11 @@ type Playlist struct {
 // + process for many users and some methods
 // todo - check songId
 type ProcessSpotifySong struct {
-	SongId string
-	Song   Song
-	ChatID int64
-	Step   string
+	SongId        string
+	Song          Song
+	ChatID        int64
+	Step          string
+	IsGetMetadata bool
 }
 type ProcessingYoutubeMediaBySpotifySongID []ProcessSpotifySong
 
