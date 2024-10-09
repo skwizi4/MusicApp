@@ -49,43 +49,57 @@ func (p *ProcessingSpotifySongByYoutubeMediaId) Delete(chatID int64) error {
 
 //ProcessingYoutubePlaylists
 
-func (p *ProcessingYoutubePlaylists) GetOrCreate(chatID int64) ProcessYoutubePlaylist {
+func (p *ProcessingFillYoutubePlaylists) GetOrCreate(chatID int64) ProcessFillYoutubePlaylist {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		return (*p)[idx]
 	}
-	NewProcess := ProcessYoutubePlaylist{
-		chatID: chatID,
-		step:   ProcessYouTubePlaylistStart,
+	NewProcess := ProcessFillYoutubePlaylist{
+		ChatID: chatID,
+		Step:   ProcessFillYouTubePlaylistStart,
 	}
 	*p = append(*p, NewProcess)
 	return NewProcess
 }
 
-func (p *ProcessingYoutubePlaylists) AddSongs(playlist Playlist, chatID int64) error {
+func (p *ProcessingFillYoutubePlaylists) AddSongs(playlist Playlist, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].songs = append((*p)[idx].songs, playlist)
+		(*p)[idx].Songs = playlist
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)
 }
 
-func (p *ProcessingYoutubePlaylists) UpdateStep(step string, chatID int64) error {
+func (p *ProcessingFillYoutubePlaylists) UpdateStep(step string, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].step = step
+		(*p)[idx].Step = step
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)
 }
 
-func (p *ProcessingYoutubePlaylists) AddTitle(title string, chatID int64) error {
+func (p *ProcessingFillYoutubePlaylists) AddTitle(title string, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].title = title
+		(*p)[idx].Songs.Title = title
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)
 }
 
-func (p *ProcessingYoutubePlaylists) Delete(chatID int64) error {
+func (p *ProcessingFillYoutubePlaylists) AddAuthToken(AuthToken string, chatID int64) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].AuthToken = AuthToken
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}
+func (p *ProcessingFillYoutubePlaylists) IfExist(chatID int64) bool {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		return true
+	}
+
+	return false
+}
+func (p *ProcessingFillYoutubePlaylists) Delete(chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		*p = append((*p)[:idx], (*p)[idx+1:]...)
 		return nil

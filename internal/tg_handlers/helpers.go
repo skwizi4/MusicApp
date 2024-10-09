@@ -82,7 +82,7 @@ func (h Handler) DeleteProcess(msg *tg.Message) {
 
 func (h Handler) Search(msg *tg.Message) error {
 	process := h.processingFindSongByMetadata.GetOrCreate(msg.Chat.ID)
-	spotifySong, err := h.spotifyHandler.GetSongByMetaData(&domain.MetaData{Title: process.Song.Title, Artist: process.Song.Artist})
+	spotifySong, err := h.spotifyHandler.GetSpotifySongByMetaData(&domain.MetaData{Title: process.Song.Title, Artist: process.Song.Artist})
 	if err != nil {
 		if err.Error() == errors.ErrInvalidParamsSpotify {
 			h.SendMsg(msg, fmt.Sprintf("Error: check input parameters. We cant find song with title: %s, and artist: %s ",
@@ -94,7 +94,7 @@ func (h Handler) Search(msg *tg.Message) error {
 		h.DeleteProcess(msg)
 		return err
 	}
-	youtubeSong, err := h.youtubeHandler.GetSongByMetaData(&domain.MetaData{Title: process.Song.Title, Artist: process.Song.Artist})
+	youtubeSong, err := h.youtubeHandler.GetYoutubeMediaByMetaData(&domain.MetaData{Title: process.Song.Title, Artist: process.Song.Artist})
 	if err != nil {
 		if err.Error() == errors.ErrInvalidParamsYoutube {
 			h.SendMsg(msg, fmt.Sprintf("Error: check input parameters. We cant find song with title: %s, and artist: %s ",
@@ -108,8 +108,8 @@ func (h Handler) Search(msg *tg.Message) error {
 		return err
 	}
 
-	SongPrint := fmt.Sprintf("Spotify song title: %s; \n Spotify song artist: %s; \n Spotify song link: %s; \n \n Youtube song title: %s;  \n Youtube song artist: %s; \n Youtube song link: %s.",
-		spotifySong.Artist, spotifySong.Title, spotifySong.Link, youtubeSong.Title, youtubeSong.Artist, youtubeSong.Link)
+	SongPrint := fmt.Sprintf("Youtube song title: %s; \n Youtube song artist: %s; \n Youtube song link: %s; \n \n Youtube song title: %s;  \n Youtube song artist: %s; \n Youtube song link: %s.",
+		spotifySong.Title, spotifySong.Artist, spotifySong.Link, youtubeSong.Title, youtubeSong.Artist, youtubeSong.Link)
 	h.SendMsg(msg, SongPrint)
 	h.DeleteProcess(msg)
 	return nil

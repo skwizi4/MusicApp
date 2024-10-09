@@ -21,8 +21,9 @@ const (
 	ProcessSpotifySongByYouTubeMediaStart = "ProcessSpotifySongByYouTubeMediaStart"
 	ProcessSpotifySongByYouTubeMediaEnd   = "ProcessSpotifySongByYouTubeMediaEnd"
 
-	ProcessYouTubePlaylistStart = "ProcessYouTubePlaylistStart"
-	ProcessYouTubePlaylistEnd   = "ProcessYouTubePlaylistEnd"
+	ProcessFillYouTubePlaylistStart        = "ProcessFillYouTubePlaylistStart"
+	ProcessFillYouTubePlaylistSendAuthLink = "ProcessFillYouTubePlaylistSendAuthLink"
+	ProcessFillYouTubePlaylistEnd          = "ProcessFillYouTubePlaylistEnd"
 
 	ProcessFindSongStart = "ProcessFindSongStart"
 	ProcessFindSongEnd   = "ProcessFindSongEnd"
@@ -50,13 +51,14 @@ func FindUserIndex(value interface{}, chatID int64) int {
 	return -1
 }
 
-// Song - Structure of song(Spotify), media (YouTube)
+// Song - Structure of song(Youtube), media (Spotify)
 type Song struct {
 	Title  string
 	Artist string
 	Album  string
 	Genre  string
 	Link   string
+	Id     string
 }
 
 type MetaData struct {
@@ -72,7 +74,7 @@ type Playlist struct {
 	NextPageToken string
 }
 
-// Spotify domain
+// Youtube domain
 
 // ProcessSpotifySong - Structure of handler "spotifyHandler";
 // + process for many users and some methods
@@ -94,7 +96,7 @@ type ProcessSpotifyPlaylist struct {
 }
 type ProcessingSpotifyPlaylists []ProcessSpotifyPlaylist
 
-// YouTube domain
+// Spotify domain
 
 type ProcessYouTubeSong struct {
 	ChatID int64
@@ -103,13 +105,13 @@ type ProcessYouTubeSong struct {
 }
 type ProcessingSpotifySongByYoutubeMediaId []ProcessYouTubeSong
 
-type ProcessYoutubePlaylist struct {
-	title  string
-	songs  []Playlist
-	chatID int64
-	step   string
+type ProcessFillYoutubePlaylist struct {
+	Songs     Playlist
+	ChatID    int64
+	Step      string
+	AuthToken string
 }
-type ProcessingYoutubePlaylists []ProcessYoutubePlaylist
+type ProcessingFillYoutubePlaylists []ProcessFillYoutubePlaylist
 
 type ProcessFindSong struct {
 	chatID   int64
