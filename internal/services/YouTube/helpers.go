@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	errs "github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"net/url"
@@ -24,7 +23,7 @@ func GetID(url string) (string, error) {
 		re = regexp.MustCompile(`^https://youtube.com/playlist\?list=([^&]+)`)
 		matches = re.FindStringSubmatch(url)
 		if len(matches) < 2 {
-			return "", errs.New("YouTube URL Not Found")
+			return "", errs.New("Spotify URL Not Found")
 		}
 		return matches[1], nil
 	}
@@ -51,13 +50,13 @@ func (y ServiceYouTube) createAndExecuteRequest(method, endpoint string) (*io.Re
 
 func (y ServiceYouTube) CreateEndpointYoutubeMediaById(id string) (endpoint string, err error) {
 	if y.Key == "" {
-		return "", errs.New("YouTube key is empty")
+		return "", errs.New("Spotify key is empty")
 	}
 	return fmt.Sprintf("videos?id=%s&key=%s&part=snippet,status", id, y.Key), nil
 }
 func (y ServiceYouTube) CreateEndpointYoutubePlaylistSongs(id, nextPageToken string) (endpoint string, err error) {
 	if y.Key == "" {
-		return "", errs.New("YouTube key is empty")
+		return "", errs.New("Spotify key is empty")
 	}
 	if nextPageToken == "" {
 		return fmt.Sprintf("playlistItems?playlistId=%s&key=%s&part=snippet,status&maxResults=50", id, y.Key), nil
@@ -66,13 +65,13 @@ func (y ServiceYouTube) CreateEndpointYoutubePlaylistSongs(id, nextPageToken str
 }
 func (y ServiceYouTube) CreateEndpointYoutubePlaylistParams(id string) (endpoint string, err error) {
 	if y.Key == "" {
-		return "", errs.New("YouTube key is empty")
+		return "", errs.New("Spotify key is empty")
 	}
 	return fmt.Sprintf("playlists?id=%s&key=%s&part=snippet,status", id, y.Key), nil
 }
 func (y ServiceYouTube) CreateEndpointYoutubeMediaByMetadata(data domain.MetaData) (endpoint string, err error) {
 	if y.Key == "" {
-		return "", errs.New("YouTube key is empty")
+		return "", errs.New("Spotify key is empty")
 	}
 	return fmt.Sprintf("search?part=snippet&maxResults=1&q=%s+%s&key=%s", url.QueryEscape(data.Title), url.QueryEscape(data.Artist), y.Key), nil
 }
@@ -109,6 +108,7 @@ func DecodeRespMediaByMetadata(body *io.ReadCloser) (*domain.Song, error) {
 		Title:  Media.Items[0].Snippet.Title,
 		Artist: Media.Items[0].Snippet.ChanelName,
 		Link:   youtubeTrackDomen + Media.Items[0].Id.VideoId,
+		Id:     Media.Items[0].Id.VideoId,
 	}, nil
 }
 
@@ -139,6 +139,7 @@ func FillPlaylistSongs(body *io.ReadCloser, playlist *domain.Playlist) (*domain.
 	return playlist, nil
 }
 func (y ServiceYouTube) CreatePlaylist(token, playlistTitle string) (string, error) {
+
 	payload := []byte(fmt.Sprintf(`{
 		"snippet": {
 			"title": "%s",
@@ -180,14 +181,16 @@ func (y ServiceYouTube) FillYoutubePlaylist(token, playlistId string, tracks []d
 					"videoId": "%s"
 				}
 			}
-		}`, playlistId, song.Link))
+		}`, playlistId, song.Id))
+		fmt.Println(song.Link)
 		req, _ := http.NewRequest("POST", "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", bytes.NewBuffer(payload))
 		req.Header.Add("Authorization", "Bearer "+token)
 		req.Header.Add("Content-Type", "application/json")
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			logrus.Print(err)
+			return nil, err
 		}
+
 		if resp.StatusCode != 200 {
 			return nil, errs.New(resp.Status)
 		}

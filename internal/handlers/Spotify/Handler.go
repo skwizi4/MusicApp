@@ -15,78 +15,79 @@ import (
 
 type Handler struct {
 	bot                                   *tg.Bot
-	ProcessingYoutubeMediaBySpotifySongID *domain.ProcessingYoutubeMediaBySpotifySongID
+	ProcessingSpotifySongByYoutubeMediaId *domain.ProcessingSpotifySongByYoutubeMediaId
 	errChannel                            *ErrChan.ErrorChannel
 	spotifyService                        services.SpotifyService
 	youtubeService                        services.YouTubeService
-	cfg                                   config.Config
+	cfg                                   *config.Config
 	logger                                logs.GoLogger
 }
 
-func New(bot *tg.Bot, processingSpotifySongs *domain.ProcessingYoutubeMediaBySpotifySongID,
-	errChan *ErrChan.ErrorChannel, cfg config.Config, logger logs.GoLogger,
-) Handler {
+func New(bot *tg.Bot, cfg *config.Config, processingYoutubeSongsById *domain.ProcessingSpotifySongByYoutubeMediaId, errChan *ErrChan.ErrorChannel, logger logs.GoLogger) Handler {
 	return Handler{
 		bot:                                   bot,
 		spotifyService:                        Spotify.NewSpotifyService(cfg),
 		youtubeService:                        YouTubeService.NewYouTubeService(cfg),
-		ProcessingYoutubeMediaBySpotifySongID: processingSpotifySongs,
+		ProcessingSpotifySongByYoutubeMediaId: processingYoutubeSongsById,
 		errChannel:                            errChan,
 		cfg:                                   cfg,
 		logger:                                logger,
 	}
 }
 
-func (h Handler) GetMediaBySpotifyLink(msg *tg.Message) error {
-	process := h.ProcessingYoutubeMediaBySpotifySongID.GetOrCreate(msg.Chat.ID)
-
+func (h Handler) GetSpotifySongByYoutubeLink(msg *tg.Message) error {
+	process := h.ProcessingSpotifySongByYoutubeMediaId.GetOrCreate(msg.Chat.ID)
 	switch process.Step {
-	case domain.ProcessSpotifySongByIdStart:
-		h.SendMsg(msg, "Send link of song that you wanna find")
-		if err := h.ProcessingYoutubeMediaBySpotifySongID.UpdateStep(domain.ProcessSpotifySongByIdEnd, msg.Chat.ID); err != nil {
-			h.SendMsg(msg, errors.ErrTryAgain)
+	case domain.ProcessSpotifySongByYouTubeMediaStart:
+
+		h.SendMsg(msg, "Send youtube link of media that you wanna find in Youtube")
+
+		if err := h.ProcessingSpotifySongByYoutubeMediaId.UpdateStep(domain.ProcessSpotifySongByYouTubeMediaEnd, msg.Chat.ID); err != nil {
+			h.SendMsg(msg, "Error, try again")
 			h.DeleteProcess(msg)
 			return err
 		}
-	case domain.ProcessSpotifySongByIdEnd:
+	case domain.ProcessSpotifySongByYouTubeMediaEnd:
 		if msg.Text == "/exit" {
 			h.SendMsg(msg, "Process stopped")
 			h.DeleteProcess(msg)
 			return nil
 		}
-		track, err := h.spotifyService.GetSpotifyTrackById(msg.Text)
-		if err != nil {
-			if err.Error() == errors.ErrInvalidParamsSpotify {
-				h.SendMsg(msg, errors.ErrInvalidParamsSpotify)
-				h.DeleteProcess(msg)
-				return err
-			}
-			h.SendMsg(msg, errors.ErrTryAgain)
-			h.DeleteProcess(msg)
-			return err
-		}
-		song, err := h.youtubeService.GetYoutubeMediaByMetadata(domain.MetaData{Title: track.Title, Artist: track.Artist})
+		track, err := h.youtubeService.GetYoutubeMediaByID(msg.Text)
 		if err != nil {
 			if err.Error() == errors.ErrInvalidParamsYoutube {
 				h.SendMsg(msg, errors.ErrInvalidParamsYoutube)
 				h.DeleteProcess(msg)
 				return err
+			} else {
+				h.SendMsg(msg, "Error, try again")
+				h.DeleteProcess(msg)
+				return err
 			}
-			h.SendMsg(msg, errors.ErrTryAgain)
-			h.DeleteProcess(msg)
-			return err
+
 		}
-		SongPrint := fmt.Sprintf("Song Title: %s \n Song Artist: %s , \n Song link: %s", song.Artist, song.Title, song.Link)
+		song, err := h.spotifyService.GetSpotifyTrackByMetadata(domain.MetaData{Title: track.Title, Artist: track.Artist})
+		if err != nil {
+			if err.Error() == errors.ErrInvalidParamsSpotify {
+				h.SendMsg(msg, errors.ErrInvalidParamsSpotify)
+				h.DeleteProcess(msg)
+				return err
+			} else {
+				h.SendMsg(msg, "Error, try again")
+				h.DeleteProcess(msg)
+				return err
+			}
+
+		}
+		SongPrint := fmt.Sprintf("Youtube Song Title: %s \n Youtube Song Artist: %s , \n Youtube Song link: %s", song.Title, song.Artist, song.Link)
 		h.SendMsg(msg, SongPrint)
 		h.DeleteProcess(msg)
-
 	}
 	return nil
-
 }
-func (h Handler) GetSongByMetaData(metadata *domain.MetaData) (*domain.Song, error) {
 
-	track, err := h.youtubeService.GetYoutubeMediaByMetadata(domain.MetaData{Title: metadata.Title, Artist: metadata.Artist})
+func (h Handler) GetSpotifySongByMetaData(metadata *domain.MetaData) (*domain.Song, error) {
+	track, err := h.spotifyService.GetSpotifyTrackByMetadata(*metadata)
 	if err != nil {
 		h.errChannel.HandleError(err)
 		return nil, err
@@ -94,10 +95,11 @@ func (h Handler) GetSongByMetaData(metadata *domain.MetaData) (*domain.Song, err
 
 	return track, nil
 }
-func (h Handler) GetPlaylistByYoutubeLink(youtubeLink string) (*domain.Playlist, error) {
+
+func (h Handler) GetSpotifyPlaylistByYoutubeLink(spotifyLink string) (*domain.Playlist, error) {
 	return nil, nil
 }
 
-func (h Handler) GetPlaylistByMetaData(metadata domain.MetaData) (*domain.Playlist, error) {
+func (h Handler) FillSpotifyPlaylist(metadata domain.MetaData) (*domain.Playlist, error) {
 	return nil, nil
 }

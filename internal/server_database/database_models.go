@@ -41,6 +41,7 @@ var (
 )
 
 func New() (*Mongo, error) {
+	fmt.Println(uri, "\n", databaseName, "\n", collectionName)
 	clientOptions := options.Client().ApplyURI(uri)
 	client, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {

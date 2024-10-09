@@ -19,8 +19,6 @@ func (s ServiceSpotify) CreateEndpointSpotifyTrackByMetadata(title, artist strin
 	if title == "" || artist == "" {
 		return "", errs.New("title or artist is empty")
 	}
-	//endpoint := "/v1/search?q=track:" + url.QueryEscape(title) + "+artist:" + url.QueryEscape(artist) + "&type=track&limit=1&offset=1"
-
 	endpoint := "/v1/search?q=https%3A%2F%2Fapi.spotify.com%2Fv1%2Fsearch%3Fquery%3Dtrack%3A" +
 		url.QueryEscape(title) + "artist%3A" + url.QueryEscape(artist) +
 		"%26type%3Dtrack%26offset%3D5%26limit%3D10&type=track"
@@ -92,7 +90,10 @@ func (s ServiceSpotify) decodeRespPlaylistId(body *io.ReadCloser) (*domain.Playl
 	p.Description = playlist.Description
 	p.Owner = playlist.Owner.DisplayName
 	p.ExternalUrl = playlist.ExternalURL.Spotify
+	p.Songs = make([]domain.Song, len(playlist.Tracks.Items))
+	fmt.Println(playlist)
 	for i, song := range playlist.Tracks.Items {
+		fmt.Println(len(p.Songs), len(playlist.Tracks.Items))
 		p.Songs[i] = domain.Song{
 			Title:  song.Track.Name,
 			Artist: song.Track.Artists[0].Name,
@@ -129,7 +130,7 @@ func GetID(url string) (string, error) {
 		re = regexp.MustCompile(`^^https://open\.spotify\.com/playlist/([^?]+)`)
 		matches = re.FindStringSubmatch(url)
 		if len(matches) < 2 {
-			return "", errs.New("YouTube URL Not Found")
+			return "", errs.New("Spotify URL Not Found")
 		}
 		return matches[1], nil
 	}

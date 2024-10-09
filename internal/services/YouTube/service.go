@@ -10,7 +10,7 @@ import (
 
 //todo Refactor
 
-func NewYouTubeService(cfg config.Config) ServiceYouTube {
+func NewYouTubeService(cfg *config.Config) ServiceYouTube {
 	return ServiceYouTube{
 		BaseUrl:   BaseUrl,
 		logger:    logger.InitLogger(),
@@ -52,7 +52,6 @@ func (y ServiceYouTube) GetYoutubePlaylistByID(link string) (*domain.Playlist, e
 	if err != nil {
 		return playlist, err
 	}
-	// Fill playlist params
 	endpoint, err := y.CreateEndpointYoutubePlaylistParams(id)
 	if err != nil {
 		return playlist, err
@@ -66,9 +65,7 @@ func (y ServiceYouTube) GetYoutubePlaylistByID(link string) (*domain.Playlist, e
 	if err != nil {
 		return playlist, err
 	}
-	fmt.Println(playlist)
 
-	// fill Playlist media
 	var NextPageToken string
 	for {
 		endpoint, err = y.CreateEndpointYoutubePlaylistSongs(id, NextPageToken)
@@ -116,9 +113,13 @@ func (y ServiceYouTube) CreateYoutubePlaylist(SpotifyPlaylist domain.Playlist, t
 	if err != nil {
 		return nil, err
 	}
+
 	YoutubePlaylist, err := y.FillYoutubePlaylist(token, id, SpotifyPlaylist.Songs)
 	if err != nil {
 		return nil, err
+	}
+	if YoutubePlaylist == nil {
+		fmt.Println("err in filling playlist  ")
 	}
 	YoutubePlaylist.Owner = SpotifyPlaylist.Owner
 	YoutubePlaylist.Title = SpotifyPlaylist.Title

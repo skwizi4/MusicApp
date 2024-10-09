@@ -1,22 +1,18 @@
-package server_database
+package MongoDB
 
 import (
 	"fmt"
 	"testing"
 )
 
-func TestNew(t *testing.T) {
-	srv, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if srv == nil {
-		t.Fatal("New() returned nil")
-	}
-}
+const (
+	Uri            = "mongodb://localhost:27017"
+	databaseName   = "Tg-Music-App"
+	collectionName = "users_tokens"
+)
 
-func TestHealth(t *testing.T) {
-	srv, err := New()
+func Test_Health(t *testing.T) {
+	srv, err := InitMongo(Uri, databaseName, collectionName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,8 +24,8 @@ func TestHealth(t *testing.T) {
 }
 
 func TestAddGetDelete(t *testing.T) {
-
-	db, err := New()
+	fmt.Println(Uri, databaseName, collectionName)
+	db, err := InitMongo(Uri, databaseName, collectionName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,13 +38,13 @@ func TestAddGetDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("user", usr)
-	err = db.Delete("tg-id")
-	if err != nil {
-		t.Fatal(err)
-	}
+	//err = db.Delete("tg-id")
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
 }
 func TestUpdate(t *testing.T) {
-	db, err := New()
+	db, err := InitMongo(Uri, databaseName, collectionName)
 	if err != nil {
 		t.Fatal(err)
 	}

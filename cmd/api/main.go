@@ -5,7 +5,6 @@ import (
 	"fmt"
 )
 
-// todo - fix bugs + refactor
 func main() {
 	srv := server.NewServer()
 	err := srv.ListenAndServe()

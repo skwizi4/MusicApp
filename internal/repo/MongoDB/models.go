@@ -6,9 +6,9 @@ import (
 )
 
 type MongoDB struct {
-	client         *mongo.Client
-	logger         logger.GoLogger
-	databaseName   string
-	collectionName string
-	collection     *mongo.Collection
+	Client         *mongo.Client
+	Logger         logger.GoLogger
+	DatabaseName   string
+	CollectionName string
+	Collection     *mongo.Collection
 }

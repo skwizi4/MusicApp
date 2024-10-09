@@ -9,7 +9,7 @@ import (
 
 // todo - Refactor
 
-func NewSpotifyService(cfg config.Config) ServiceSpotify {
+func NewSpotifyService(cfg *config.Config) ServiceSpotify {
 	return ServiceSpotify{
 		BaseUrl:      BaseUrl,
 		ClientId:     cfg.SpotifyCfg.ClientID,

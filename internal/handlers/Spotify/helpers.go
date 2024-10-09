@@ -11,7 +11,7 @@ func (h Handler) SendMsg(msg *tg.Message, outText string) {
 	}
 }
 func (h Handler) DeleteProcess(msg *tg.Message) {
-	if err := h.ProcessingYoutubeMediaBySpotifySongID.Delete(msg.Chat.ID); err != nil {
+	if err := h.ProcessingSpotifySongByYoutubeMediaId.Delete(msg.Chat.ID); err != nil {
 		log.Println("Error deleting process:", err)
 	}
 }
