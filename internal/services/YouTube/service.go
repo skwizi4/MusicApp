@@ -21,8 +21,8 @@ func NewYouTubeService(cfg *config.Config) ServiceYouTube {
 	}
 }
 
-// GetYoutubeMediaByID Tested - Tested(OK)
-func (y ServiceYouTube) GetYoutubeMediaByID(link string) (*domain.Song, error) {
+// GetYoutubeMediaByLink  - Tested(OK)
+func (y ServiceYouTube) GetYoutubeMediaByLink(link string) (*domain.Song, error) {
 
 	id, err := GetID(link)
 	if err != nil {
@@ -45,8 +45,8 @@ func (y ServiceYouTube) GetYoutubeMediaByID(link string) (*domain.Song, error) {
 	return song, nil
 }
 
-// GetYoutubePlaylistByID - Tested(OK)
-func (y ServiceYouTube) GetYoutubePlaylistByID(link string) (*domain.Playlist, error) {
+// GetYoutubePlaylistByLink - Tested(OK)
+func (y ServiceYouTube) GetYoutubePlaylistDataByLink(link string) (*domain.Playlist, error) {
 	var playlist = &domain.Playlist{}
 	id, err := GetID(link)
 	if err != nil {
@@ -107,8 +107,8 @@ func (y ServiceYouTube) GetYoutubeMediaByMetadata(data domain.MetaData) (*domain
 	return song, nil
 }
 
-// CreateYoutubePlaylist - Tested(OK)
-func (y ServiceYouTube) CreateYoutubePlaylist(SpotifyPlaylist domain.Playlist, token string) (*domain.Playlist, error) {
+// CreateAndFillYoutubePlaylist - Tested(OK)
+func (y ServiceYouTube) CreateAndFillYoutubePlaylist(SpotifyPlaylist domain.Playlist, token string) (*domain.Playlist, error) {
 	id, err := y.CreatePlaylist(token, SpotifyPlaylist.Title)
 	if err != nil {
 		return nil, err

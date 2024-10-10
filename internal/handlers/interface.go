@@ -2,23 +2,22 @@ package handlers
 
 import (
 	"MusicApp/internal/domain"
-	tg "gopkg.in/tucnak/telebot.v2"
 )
 
 // todo - Написать структуры: MetaData, Song, Playlist ( directory - domain)
 
 type (
 	Youtube interface {
-		GetMediaBySpotifyLink(msg *tg.Message) error
+		GetYoutubeMediaByLink(youtubeLink string) (*domain.Song, error)
 		GetYoutubeMediaByMetaData(metadata *domain.MetaData) (*domain.Song, error)
-		GetYoutubePlaylistBySpotifyLink(youtubeLink string) (*domain.Playlist, error)
-		FillYoutubePlaylist(playlist domain.Playlist, AuthToken string) (*domain.Playlist, error)
+		GetYoutubePlaylistByLink(youtubeLink string) (*domain.Playlist, error)
+		CreateAndFillYoutubePlaylist(playlist domain.Playlist, AuthToken string) (*domain.Playlist, error)
 	}
 
 	Spotify interface {
-		GetSpotifySongByYoutubeLink(msg *tg.Message) error
+		GetSpotifySongByLink(spotifyLink string) (*domain.Song, error)
 		GetSpotifySongByMetaData(metadata *domain.MetaData) (*domain.Song, error)
-		GetSpotifyPlaylistByYoutubeLink(spotifyLink string) (*domain.Playlist, error)
-		FillSpotifyPlaylist(metadata domain.MetaData) (*domain.Playlist, error)
+		GetSpotifyPlaylistByLink(spotifyLink string) (*domain.Playlist, error)
+		FillSpotifyPlaylist(playlist domain.Playlist) (*domain.Playlist, error)
 	}
 )
