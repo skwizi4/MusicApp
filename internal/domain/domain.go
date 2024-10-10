@@ -1,38 +1,38 @@
 package domain
 
 import (
+	"errors"
 	"reflect"
 )
 
 // todo - Заполнить структуры и написать к ним crud - методы
 
 const (
-	ProcessSpotifySongByIdStart = "ProcessSpotifySongByIdStart"
-	ProcessSpotifySongByIdEnd   = "ProcessSpotifySongByIdEnd"
+	ProcessYoutubeMediaBySpotifySongLinkStart = "ProcessYoutubeMediaBySpotifySongLinkStart"
+	ProcessYoutubeMediaBySpotifySongLinkEnd   = "ProcessYoutubeMediaBySpotifySongLinkEnd"
 
-	ProcessSpotifySongByMetadataStart  = "ProcessSpotifySongByMetadataStart"
-	ProcessSpotifySongByMetadataTitle  = "ProcessSpotifySongByMetadataTitle"
-	ProcessSpotifySongByMetadataArtist = "ProcessSpotifySongByMetadataArtist"
-	ProcessSpotifySongByMetadataEnd    = "ProcessSpotifySongByMetadataEnd"
+	ProcessSpotifySongByYouTubeMediaLinkStart = "ProcessSpotifySongByYouTubeMediaLinkStart"
+	ProcessSpotifySongByYouTubeMediaLinkEnd   = "ProcessSpotifySongByYouTubeMediaLinkEnd"
+
+	ProcessSongByMetadataStart  = "ProcessSongByMetadataStart"
+	ProcessSongByMetadataTitle  = "ProcessSongByMetadataTitle"
+	ProcessSongByMetadataArtist = "ProcessSongByMetadataArtist"
+	ProcessSongByMetadataEnd    = "ProcessSongByMetadataEnd"
 
 	ProcessSpotifyPlaylistStart = "ProcessSpotifyPlaylistStart"
 	ProcessSpotifyPlaylistEnd   = "ProcessSpotifyPlaylistEnd"
-
-	ProcessSpotifySongByYouTubeMediaStart = "ProcessSpotifySongByYouTubeMediaStart"
-	ProcessSpotifySongByYouTubeMediaEnd   = "ProcessSpotifySongByYouTubeMediaEnd"
 
 	ProcessFillYouTubePlaylistStart        = "ProcessFillYouTubePlaylistStart"
 	ProcessFillYouTubePlaylistSendAuthLink = "ProcessFillYouTubePlaylistSendAuthLink"
 	ProcessFillYouTubePlaylistEnd          = "ProcessFillYouTubePlaylistEnd"
 
-	ProcessFindSongStart = "ProcessFindSongStart"
-	ProcessFindSongEnd   = "ProcessFindSongEnd"
-
 	ErrChatIDNotFound = "chatID not found"
 )
 
 func FindUserIndex(value interface{}, chatID int64) int {
+
 	v := reflect.ValueOf(value)
+
 	if v.Kind() != reflect.Slice {
 		return -1
 	}
@@ -76,17 +76,17 @@ type Playlist struct {
 
 // Youtube domain
 
-// ProcessSpotifySong - Structure of handler "spotifyHandler";
+// ProcessSong - Structure of handler "spotifyHandler";
 // + process for many users and some methods
 // todo - check songId
-type ProcessSpotifySong struct {
+type ProcessSong struct {
 	SongId        string
 	Song          Song
 	ChatID        int64
 	Step          string
 	IsGetMetadata bool
 }
-type ProcessingYoutubeMediaBySpotifySongID []ProcessSpotifySong
+type ProcessingYoutubeMediaBySpotifySongLink []ProcessSong
 
 type ProcessSpotifyPlaylist struct {
 	chatID   int64
@@ -103,15 +103,15 @@ type ProcessYouTubeSong struct {
 	Song   Song
 	Step   string
 }
-type ProcessingSpotifySongByYoutubeMediaId []ProcessYouTubeSong
+type ProcessingSpotifySongByYoutubeMediaLink []ProcessYouTubeSong
 
-type ProcessFillYoutubePlaylist struct {
+type ProcessCreateAndFillYoutubePlaylist struct {
 	Songs     Playlist
 	ChatID    int64
 	Step      string
 	AuthToken string
 }
-type ProcessingFillYoutubePlaylists []ProcessFillYoutubePlaylist
+type ProcessingCreateAndFillYoutubePlaylists []ProcessCreateAndFillYoutubePlaylist
 
 type ProcessFindSong struct {
 	chatID   int64
@@ -119,10 +119,69 @@ type ProcessFindSong struct {
 	step     string
 }
 
-// both
+// ProcessingFindSongs both handlers
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 type ProcessingFindSongs []ProcessFindSong
 
-//todo - refactor
+type ProcessingFindSongByMetadata []ProcessSong
 
-type ProcessingFindSongByMetadata []ProcessSpotifySong
+//ProcessSpotifyByMetadata
+
+func (p *ProcessingFindSongByMetadata) GetOrCreate(chatID int64) ProcessSong {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		return (*p)[idx]
+	}
+	NewProcess := ProcessSong{
+		ChatID: chatID,
+		Step:   ProcessSongByMetadataStart,
+	}
+	*p = append(*p, NewProcess)
+	return NewProcess
+}
+func (p *ProcessingFindSongByMetadata) IfExist(chatID int64) bool {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		return true
+	}
+	return false
+
+}
+
+func (p *ProcessingFindSongByMetadata) UpdateStep(step string, chatID int64) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].Step = step
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}
+func (p *ProcessingFindSongByMetadata) Delete(chatID int64) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		*p = append((*p)[:idx], (*p)[idx+1:]...)
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}
+func (p *ProcessingFindSongByMetadata) AddTitle(chatID int64, title string) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].Song.Title = title
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}
+func (p *ProcessingFindSongByMetadata) AddArtist(chatID int64, artist string) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].Song.Artist = artist
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}
+func (p *ProcessingFindSongByMetadata) ChangeIsGetMetadata(chatID int64, value bool) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].IsGetMetadata = value
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}

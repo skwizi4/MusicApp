@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"time"
 )
 
 //todo Refactor
@@ -42,6 +43,7 @@ func (y ServiceYouTube) createAndExecuteRequest(method, endpoint string) (*io.Re
 	if err != nil {
 		return nil, err
 	}
+
 	if resp.StatusCode != 200 {
 		return &resp.Body, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
@@ -186,6 +188,7 @@ func (y ServiceYouTube) FillYoutubePlaylist(token, playlistId string, tracks []d
 		req, _ := http.NewRequest("POST", "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", bytes.NewBuffer(payload))
 		req.Header.Add("Authorization", "Bearer "+token)
 		req.Header.Add("Content-Type", "application/json")
+		time.Sleep(500 * time.Millisecond)
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return nil, err

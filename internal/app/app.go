@@ -18,20 +18,20 @@ import (
 
 // App - structure of app
 type App struct {
-	appName                        string
-	bot                            *tg.Bot
-	Config                         config.Config
-	errChan                        *ErrChan.ErrorChannel
-	logger                         logger.GoLogger
-	validator                      *validator.Validate
-	mongo                          *MongoDB.MongoDB
-	spotifyHandler                 handlers.Youtube
-	youtubeHandler                 handlers.Spotify
-	telegramHandler                tg_handlers.Handler
-	processingSpotifySongsById     domain.ProcessingYoutubeMediaBySpotifySongID
-	processingYoutubeMediaById     domain.ProcessingSpotifySongByYoutubeMediaId
-	processingSongsByMetadata      domain.ProcessingFindSongByMetadata
-	ProcessingFillYoutubePlaylists domain.ProcessingFillYoutubePlaylists
+	appName                                 string
+	bot                                     *tg.Bot
+	Config                                  config.Config
+	errChan                                 *ErrChan.ErrorChannel
+	logger                                  logger.GoLogger
+	validator                               *validator.Validate
+	mongo                                   *MongoDB.MongoDB
+	spotifyHandler                          handlers.Youtube
+	youtubeHandler                          handlers.Spotify
+	telegramHandler                         tg_handlers.Handler
+	ProcessingYoutubeMediaBySpotifySongLink domain.ProcessingYoutubeMediaBySpotifySongLink
+	ProcessingSpotifySongByYoutubeMediaLink domain.ProcessingSpotifySongByYoutubeMediaLink
+	ProcessingFindSongByMetadata            domain.ProcessingFindSongByMetadata
+	ProcessingCreateAndFillYoutubePlaylists domain.ProcessingCreateAndFillYoutubePlaylists
 }
 
 // New - return new variation of application
@@ -122,9 +122,9 @@ func (a *App) InitBot() {
 
 // InitHandlers - инициализирует хендлера
 func (a *App) InitHandlers() {
-	a.spotifyHandler = Youtube.New(a.bot, &a.processingSpotifySongsById, a.errChan, &a.Config, a.logger)
-	a.youtubeHandler = Spotify.New(a.bot, &a.Config, &a.processingYoutubeMediaById, a.errChan, a.logger)
-	a.telegramHandler = tg_handlers.New(a.bot, a.spotifyHandler, a.youtubeHandler, &a.processingSongsByMetadata, &a.ProcessingFillYoutubePlaylists, &a.Config, a.mongo, a.errChan, a.logger)
+	a.spotifyHandler = Youtube.New(a.bot, &a.ProcessingYoutubeMediaBySpotifySongLink, a.errChan, &a.Config, a.logger)
+	a.youtubeHandler = Spotify.New(a.bot, &a.Config, &a.ProcessingSpotifySongByYoutubeMediaLink, a.errChan, a.logger)
+	a.telegramHandler = tg_handlers.New(a.bot, a.spotifyHandler, a.youtubeHandler, &a.ProcessingFindSongByMetadata, &a.ProcessingCreateAndFillYoutubePlaylists, &a.ProcessingYoutubeMediaBySpotifySongLink, &a.ProcessingSpotifySongByYoutubeMediaLink, &a.Config, a.mongo, a.errChan, a.logger)
 }
 
 // ListenTgBot - todo - отредактировать хендлера под задачи
@@ -150,14 +150,14 @@ func (a *App) ListenTgBot() {
 
 	a.bot.Handle(tg.OnText, func(msg *tg.Message) {
 		switch {
-		case a.processingSpotifySongsById.IfExist(msg.Chat.ID):
+		case a.ProcessingYoutubeMediaBySpotifySongLink.IfExist(msg.Chat.ID):
 			go a.telegramHandler.YoutubeSong(msg)
-		case a.processingSongsByMetadata.IfExist(msg.Chat.ID):
+		case a.ProcessingFindSongByMetadata.IfExist(msg.Chat.ID):
 
 			go a.telegramHandler.FindSong(msg)
-		case a.processingYoutubeMediaById.IfExist(msg.Chat.ID):
+		case a.ProcessingSpotifySongByYoutubeMediaLink.IfExist(msg.Chat.ID):
 			go a.telegramHandler.SpotifySong(msg)
-		case a.ProcessingFillYoutubePlaylists.IfExist(msg.Chat.ID):
+		case a.ProcessingCreateAndFillYoutubePlaylists.IfExist(msg.Chat.ID):
 			go a.telegramHandler.FillYoutubePlaylist(msg)
 		}
 

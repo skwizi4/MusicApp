@@ -4,35 +4,45 @@ import (
 	"errors"
 )
 
-//ProcessingYoutubeMediaBySpotifySongID
+//processingSpotifySongByYoutubeMediaLink
 
-func (p *ProcessingYoutubeMediaBySpotifySongID) GetOrCreate(chatID int64) ProcessSpotifySong {
+func (p *ProcessingSpotifySongByYoutubeMediaLink) GetOrCreate(chatID int64) ProcessYouTubeSong {
+
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		return (*p)[idx]
 	}
-	NewProcess := ProcessSpotifySong{
+	NewProcess := ProcessYouTubeSong{
 		ChatID: chatID,
-		Step:   ProcessSpotifySongByIdStart,
+		Step:   ProcessSpotifySongByYouTubeMediaLinkStart,
 	}
 	*p = append(*p, NewProcess)
 	return NewProcess
 }
-func (p *ProcessingYoutubeMediaBySpotifySongID) IfExist(chatID int64) bool {
+
+func (p *ProcessingSpotifySongByYoutubeMediaLink) IfExist(chatID int64) bool {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		return true
 	}
 	return false
-
 }
 
-func (p *ProcessingYoutubeMediaBySpotifySongID) UpdateStep(step string, chatID int64) error {
+func (p *ProcessingSpotifySongByYoutubeMediaLink) AddSong(song Song, chatID int64) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].Song = song
+		return nil
+	}
+	return errors.New(ErrChatIDNotFound)
+}
+
+func (p *ProcessingSpotifySongByYoutubeMediaLink) UpdateStep(step string, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		(*p)[idx].Step = step
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)
 }
-func (p *ProcessingYoutubeMediaBySpotifySongID) Delete(chatID int64) error {
+
+func (p *ProcessingSpotifySongByYoutubeMediaLink) Delete(chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		*p = append((*p)[:idx], (*p)[idx+1:]...)
 		return nil
@@ -40,62 +50,7 @@ func (p *ProcessingYoutubeMediaBySpotifySongID) Delete(chatID int64) error {
 	return errors.New(ErrChatIDNotFound)
 }
 
-//ProcessSpotifyByMetadata
-
-func (p *ProcessingFindSongByMetadata) GetOrCreate(chatID int64) ProcessSpotifySong {
-	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		return (*p)[idx]
-	}
-	NewProcess := ProcessSpotifySong{
-		ChatID: chatID,
-		Step:   ProcessSpotifySongByMetadataStart,
-	}
-	*p = append(*p, NewProcess)
-	return NewProcess
-}
-func (p *ProcessingFindSongByMetadata) IfExist(chatID int64) bool {
-	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		return true
-	}
-	return false
-
-}
-
-func (p *ProcessingFindSongByMetadata) UpdateStep(step string, chatID int64) error {
-	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].Step = step
-		return nil
-	}
-	return errors.New(ErrChatIDNotFound)
-}
-func (p *ProcessingFindSongByMetadata) Delete(chatID int64) error {
-	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		*p = append((*p)[:idx], (*p)[idx+1:]...)
-		return nil
-	}
-	return errors.New(ErrChatIDNotFound)
-}
-func (p *ProcessingFindSongByMetadata) AddTitle(chatID int64, title string) error {
-	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].Song.Title = title
-		return nil
-	}
-	return errors.New(ErrChatIDNotFound)
-}
-func (p *ProcessingFindSongByMetadata) AddArtist(chatID int64, artist string) error {
-	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].Song.Artist = artist
-		return nil
-	}
-	return errors.New(ErrChatIDNotFound)
-}
-func (p *ProcessingFindSongByMetadata) ChangeIsGetMetadata(chatID int64, value bool) error {
-	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].IsGetMetadata = value
-		return nil
-	}
-	return errors.New(ErrChatIDNotFound)
-}
+//ProcessingYoutubePlaylists
 
 //ProcessSpotifyPlaylist
 

@@ -18,7 +18,7 @@ func NewSpotifyService(cfg *config.Config) ServiceSpotify {
 	}
 }
 
-func (s ServiceSpotify) GetSpotifyTrackById(link string) (*domain.Song, error) {
+func (s ServiceSpotify) GetSpotifyTrackMetadataByLink(link string) (*domain.Song, error) {
 	id, err := GetID(link)
 
 	if err != nil {
@@ -47,7 +47,7 @@ func (s ServiceSpotify) GetSpotifyTrackById(link string) (*domain.Song, error) {
 }
 
 // GetSpotifyPlaylistById todo - Check bugs
-func (s ServiceSpotify) GetSpotifyPlaylistById(link string) (*domain.Playlist, error) {
+func (s ServiceSpotify) GetSpotifyPlaylistDataByLink(link string) (*domain.Playlist, error) {
 	id, err := GetID(link)
 
 	if err != nil {
@@ -94,6 +94,6 @@ func (s ServiceSpotify) GetSpotifyTrackByMetadata(data domain.MetaData) (*domain
 	return Song, nil
 
 }
-func (s ServiceSpotify) FillSpotifyPlaylist(playlist domain.Playlist) (*domain.Playlist, error) {
+func (s ServiceSpotify) CreateAndFillSpotifyPlaylist(playlist domain.Playlist) (*domain.Playlist, error) {
 	return nil, nil
 }
