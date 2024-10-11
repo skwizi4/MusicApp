@@ -1,6 +1,7 @@
 package YouTube
 
 import (
+	"MusicApp/internal/config"
 	logger "github.com/skwizi4/lib/logs"
 )
 
@@ -17,6 +18,17 @@ type ServiceYouTube struct {
 	ClientID  string
 	ServerUrl string
 	Scope     string
+}
+
+func NewYouTubeService(cfg *config.Config) ServiceYouTube {
+	return ServiceYouTube{
+		BaseUrl:   BaseUrl,
+		logger:    logger.InitLogger(),
+		Key:       cfg.YoutubeCfg.Key,
+		ClientID:  cfg.YoutubeCfg.ClientID,
+		ServerUrl: ServerUrl,
+		Scope:     scope,
+	}
 }
 
 type (

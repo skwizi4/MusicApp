@@ -1,25 +1,10 @@
 package YouTube
 
 import (
-	"MusicApp/internal/config"
 	"MusicApp/internal/domain"
 	"fmt"
-	logger "github.com/skwizi4/lib/logs"
 	"net/http"
 )
-
-//todo Refactor
-
-func NewYouTubeService(cfg *config.Config) ServiceYouTube {
-	return ServiceYouTube{
-		BaseUrl:   BaseUrl,
-		logger:    logger.InitLogger(),
-		Key:       cfg.YoutubeCfg.Key,
-		ClientID:  cfg.YoutubeCfg.ClientID,
-		ServerUrl: ServerUrl,
-		Scope:     scope,
-	}
-}
 
 // GetYoutubeMediaByLink  - Tested(OK)
 func (y ServiceYouTube) GetYoutubeMediaByLink(link string) (*domain.Song, error) {

@@ -26,7 +26,7 @@ const (
 	ProcessFillYouTubePlaylistSendAuthLink = "ProcessFillYouTubePlaylistSendAuthLink"
 	ProcessFillYouTubePlaylistEnd          = "ProcessFillYouTubePlaylistEnd"
 
-	ErrChatIDNotFound = "chatID not found"
+	ErrChatIDNotFound = "ChatID not found"
 )
 
 func FindUserIndex(value interface{}, chatID int64) int {
@@ -88,13 +88,13 @@ type ProcessSong struct {
 }
 type ProcessingYoutubeMediaBySpotifySongLink []ProcessSong
 
-type ProcessSpotifyPlaylist struct {
-	chatID   int64
-	step     string
-	title    string
-	playlist Playlist
+type ProcessCreateAndFillSpotifyPlaylist struct {
+	ChatID   int64
+	Step     string
+	Title    string
+	Playlist Playlist
 }
-type ProcessingSpotifyPlaylists []ProcessSpotifyPlaylist
+type ProcessingCreateAndFillSpotifyPlaylists []ProcessCreateAndFillSpotifyPlaylist
 
 // Spotify domain
 
@@ -106,7 +106,7 @@ type ProcessYouTubeSong struct {
 type ProcessingSpotifySongByYoutubeMediaLink []ProcessYouTubeSong
 
 type ProcessCreateAndFillYoutubePlaylist struct {
-	Songs     Playlist
+	Playlist  Playlist
 	ChatID    int64
 	Step      string
 	AuthToken string

@@ -52,7 +52,7 @@ func (p *ProcessingCreateAndFillYoutubePlaylists) GetOrCreate(chatID int64) Proc
 
 func (p *ProcessingCreateAndFillYoutubePlaylists) AddSongs(playlist Playlist, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].Songs = playlist
+		(*p)[idx].Playlist = playlist
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)
@@ -68,7 +68,7 @@ func (p *ProcessingCreateAndFillYoutubePlaylists) UpdateStep(step string, chatID
 
 func (p *ProcessingCreateAndFillYoutubePlaylists) AddTitle(title string, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].Songs.Title = title
+		(*p)[idx].Playlist.Title = title
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)

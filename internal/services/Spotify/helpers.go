@@ -138,22 +138,6 @@ func GetID(url string) (string, error) {
 	return matches[1], nil
 }
 
-//func ParseSpotifyIDFromURL(link string) (string, string, error) {
-//
-//	if strings.Contains(link, "https://open.spotify.com/track/") {
-//		id := strings.Split(link, "https://open.spotify.com/track/")[1]
-//
-//		return "track", strings.Split(id, "?")[0], nil
-//	}
-//	if strings.Contains(link, "https://open.spotify.com/playlist/") {
-//		id := strings.Split(link, "https://open.spotify.com/playlist/")[1]
-//		return "playlist", strings.Split(id, "?")[0], nil
-//	}
-//	return "", "", errors.New("can't parse ID, invalid URL format")
-//}
-
-// Request Auth Token
-
 func (s *ServiceSpotify) RequestToken() error {
 	req, err := s.buildRequest()
 	if err != nil {

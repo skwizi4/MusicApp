@@ -8,6 +8,7 @@ import (
 	"MusicApp/internal/handlers/Youtube"
 	"MusicApp/internal/repo/MongoDB"
 	"MusicApp/internal/tg_handlers"
+	"MusicApp/internal/workflows"
 	"context"
 	"github.com/go-playground/validator/v10"
 	"github.com/skwizi4/lib/ErrChan"
@@ -25,13 +26,15 @@ type App struct {
 	logger                                  logger.GoLogger
 	validator                               *validator.Validate
 	mongo                                   *MongoDB.MongoDB
-	spotifyHandler                          handlers.Youtube
-	youtubeHandler                          handlers.Spotify
+	youtubeHandler                          handlers.Youtube
+	spotifyHandler                          handlers.Spotify
 	telegramHandler                         tg_handlers.Handler
+	WorkFlows                               *workflows.WorkFlows
 	ProcessingYoutubeMediaBySpotifySongLink domain.ProcessingYoutubeMediaBySpotifySongLink
 	ProcessingSpotifySongByYoutubeMediaLink domain.ProcessingSpotifySongByYoutubeMediaLink
 	ProcessingFindSongByMetadata            domain.ProcessingFindSongByMetadata
 	ProcessingCreateAndFillYoutubePlaylists domain.ProcessingCreateAndFillYoutubePlaylists
+	ProcessingCreateAndFillSpotifyPlaylists domain.ProcessingCreateAndFillSpotifyPlaylists
 }
 
 // New - return new variation of application
@@ -122,9 +125,13 @@ func (a *App) InitBot() {
 
 // InitHandlers - инициализирует хендлера
 func (a *App) InitHandlers() {
-	a.spotifyHandler = Youtube.New(a.bot, &a.ProcessingYoutubeMediaBySpotifySongLink, a.errChan, &a.Config, a.logger)
-	a.youtubeHandler = Spotify.New(a.bot, &a.Config, &a.ProcessingSpotifySongByYoutubeMediaLink, a.errChan, a.logger)
-	a.telegramHandler = tg_handlers.New(a.bot, a.spotifyHandler, a.youtubeHandler, &a.ProcessingFindSongByMetadata, &a.ProcessingCreateAndFillYoutubePlaylists, &a.ProcessingYoutubeMediaBySpotifySongLink, &a.ProcessingSpotifySongByYoutubeMediaLink, &a.Config, a.mongo, a.errChan, a.logger)
+	a.youtubeHandler = Youtube.New(a.errChan, &a.Config, a.logger)
+	a.spotifyHandler = Spotify.New(a.errChan, &a.Config, a.logger)
+	a.WorkFlows = workflows.New(a.bot, &a.ProcessingYoutubeMediaBySpotifySongLink, &a.ProcessingSpotifySongByYoutubeMediaLink,
+		&a.ProcessingFindSongByMetadata, &a.ProcessingCreateAndFillYoutubePlaylists, &a.ProcessingCreateAndFillSpotifyPlaylists,
+		a.logger, a.errChan, a.youtubeHandler, a.spotifyHandler, a.Config, a.mongo)
+	a.telegramHandler = tg_handlers.New(a.bot, a.youtubeHandler, a.spotifyHandler, &a.ProcessingFindSongByMetadata,
+		&a.ProcessingCreateAndFillYoutubePlaylists, &a.ProcessingYoutubeMediaBySpotifySongLink, &a.ProcessingSpotifySongByYoutubeMediaLink, &a.Config, a.mongo, a.errChan, a.logger, a.WorkFlows)
 }
 
 // ListenTgBot - todo - отредактировать хендлера под задачи
