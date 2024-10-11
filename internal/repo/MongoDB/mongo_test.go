@@ -2,13 +2,14 @@ package MongoDB
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
-const (
-	Uri            = "mongodb://localhost:27017"
-	databaseName   = "Tg-Music-App"
-	collectionName = "users_tokens"
+var (
+	Uri            = os.Getenv("DB_URI")
+	databaseName   = os.Getenv("DB_NAME")
+	collectionName = os.Getenv("DB_COLLECTION_NAME")
 )
 
 func Test_Health(t *testing.T) {
