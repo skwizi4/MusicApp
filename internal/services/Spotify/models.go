@@ -79,4 +79,7 @@ type (
 			Total int `json:"total"`
 		} `json:"tracks"`
 	}
+	PlaylistCreateRequest struct {
+		Name string `json:"name"`
+	}
 )

@@ -19,8 +19,8 @@ const (
 	ProcessSongByMetadataArtist = "ProcessSongByMetadataArtist"
 	ProcessSongByMetadataEnd    = "ProcessSongByMetadataEnd"
 
-	ProcessSpotifyPlaylistStart = "ProcessSpotifyPlaylistStart"
-	ProcessSpotifyPlaylistEnd   = "ProcessSpotifyPlaylistEnd"
+	ProcessCreateAndFillSpotifyPlaylistStart = "ProcessCreateAndFillSpotifyPlaylistStart"
+	ProcessCreateAndFillSpotifyPlaylistEnd   = "ProcessCreateAndFillSpotifyPlaylistEnd"
 
 	ProcessFillYouTubePlaylistStart        = "ProcessFillYouTubePlaylistStart"
 	ProcessFillYouTubePlaylistSendAuthLink = "ProcessFillYouTubePlaylistSendAuthLink"

@@ -69,7 +69,7 @@ func (w WorkFlows) DeleteProcessingYoutubeMediaBySpotifySongID(msg *tg.Message) 
 /* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
 
-// CreateAndFillYoutubePlaylist - todo refactor
+// CreateAndFillYoutubePlaylistHelper - Completed
 
 func (w WorkFlows) CreateAndFillYoutubePlaylist(msg *tg.Message) error {
 	process := w.ProcessingCreateAndFillYoutubePlaylists.GetOrCreate(msg.Chat.ID)

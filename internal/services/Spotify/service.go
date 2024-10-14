@@ -3,6 +3,8 @@ package Spotify
 import (
 	"MusicApp/internal/config"
 	"MusicApp/internal/domain"
+	"bytes"
+	"fmt"
 	logger "github.com/skwizi4/lib/logs"
 	"net/http"
 )
@@ -87,13 +89,58 @@ func (s ServiceSpotify) GetSpotifyTrackByMetadata(data domain.MetaData) (*domain
 		return nil, err
 	}
 
-	Song, err := s.decodeRespTrackByName(resp)
+	Song, err := s.decodeSpotifyRespTrackByMetadata(resp)
 	if err != nil {
 		return nil, err
 	}
 	return Song, nil
 
 }
-func (s ServiceSpotify) CreateAndFillSpotifyPlaylist(playlist domain.Playlist) (*domain.Playlist, error) {
-	return nil, nil
+func (s ServiceSpotify) CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId string) (string, error) {
+
+	endpoint, body, err := s.CreateEndpointCreateAndFillSpotifyPlaylist(Title, SpotifyUserId)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := s.createAndExecuteCreateSpotifyPlaylistRequset(http.MethodGet, endpoint, body)
+	if err != nil {
+		return "", err
+	}
+
+	id, err := s.decodeRespCreateSpotifyPlaylist(resp)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+func (s ServiceSpotify) FillSpotifyPlaylist(YouTubePlaylist domain.Playlist, AuthToken, SpotifyPlaylistId string) (*domain.Playlist, error) {
+	SpotifyPlaylist := &domain.Playlist{}
+	for i, track := range YouTubePlaylist.Songs {
+		Song, err := s.GetSpotifyTrackByMetadata(domain.MetaData{Title: track.Title, Artist: track.Artist})
+		if err != nil {
+			return nil, err
+		}
+		req, _ := http.NewRequest("POST", fmt.Sprintf("https://api.spotify.com/v1/playlists/%s/tracks", SpotifyPlaylistId), bytes.NewBuffer([]byte(fmt.Sprintf(`{"uris": ["spotify:track:%s"]}`, Song.Id))))
+		req.Header.Add("Authorization", "Bearer "+AuthToken)
+		req.Header.Add("Content-Type", "application/json")
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode != 200 {
+			return nil, fmt.Errorf(resp.Status)
+		}
+		SpotifyPlaylist.Songs = append(SpotifyPlaylist.Songs, *Song)
+		if i == len(YouTubePlaylist.Songs) {
+			break
+		}
+	}
+	SpotifyPlaylist.Owner = YouTubePlaylist.Owner
+	SpotifyPlaylist.Title = YouTubePlaylist.Title
+	SpotifyPlaylist.Description = "Playlist created by tg_bot MusicApp"
+	SpotifyPlaylist.ExternalUrl = fmt.Sprintf("https://youtube.com/playlist?list=%s", SpotifyPlaylistId)
+	return SpotifyPlaylist, nil
 }

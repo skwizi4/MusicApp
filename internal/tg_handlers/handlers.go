@@ -4,14 +4,14 @@ import (
 	tg "gopkg.in/tucnak/telebot.v2"
 )
 
-// YoutubeSong - completed
-func (h Handler) YoutubeSong(msg *tg.Message) {
-	h.errChannel.HandleError(h.GetYoutubeSong(msg))
+// GetYoutubeSong - completed
+func (h Handler) GetYoutubeSong(msg *tg.Message) {
+	h.errChannel.HandleError(h.GetYoutubeSongHelper(msg))
 }
 
-// SpotifySong -  completed
-func (h Handler) SpotifySong(msg *tg.Message) {
-	h.errChannel.HandleError(h.GetSpotifySong(msg))
+// GetSpotifySong -  completed
+func (h Handler) GetSpotifySong(msg *tg.Message) {
+	h.errChannel.HandleError(h.GetSpotifySongHelper(msg))
 }
 
 // Help - completed
@@ -21,15 +21,15 @@ func (h Handler) Help(msg *tg.Message) {
 
 // FindSong - completed
 func (h Handler) FindSong(msg *tg.Message) {
-	h.errChannel.HandleError(h.GetSongsByMetadata(msg))
+	h.errChannel.HandleError(h.GetSongsByMetadataHelper(msg))
 }
 
-// FillYoutubePlaylist  todo write handler
-func (h Handler) FillYoutubePlaylist(msg *tg.Message) {
-	h.errChannel.HandleError(h.CreateAndFillYoutubePlaylist(msg))
+// CreateFillYoutubePlaylist  todo write handler
+func (h Handler) CreateFillYoutubePlaylist(msg *tg.Message) {
+	h.errChannel.HandleError(h.CreateAndFillYoutubePlaylistHelper(msg))
 }
 
-// FillSpotifyPlaylist todo - write handler
-func (h Handler) FillSpotifyPlaylist(msg *tg.Message) {
-
+// CreateFillSpotifyPlaylist todo - write handler
+func (h Handler) CreateFillSpotifyPlaylist(msg *tg.Message) {
+	h.errChannel.HandleError(h.CreateAndFillSpotifyPlaylistHelper(msg))
 }

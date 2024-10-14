@@ -16,6 +16,9 @@ func (h Handler) GetYoutubePlaylistByLink(youtubeLink string) (*domain.Playlist,
 	return h.youtubeService.GetYoutubePlaylistDataByLink(youtubeLink)
 }
 
-func (h Handler) CreateAndFillYoutubePlaylist(playlist domain.Playlist, AuthToken string) (*domain.Playlist, error) {
-	return h.youtubeService.CreateAndFillYoutubePlaylist(playlist, AuthToken)
+func (h Handler) CreateAndFillYoutubePlaylist(Title string, AuthToken string) (string, error) {
+	return h.youtubeService.CreateYoutubePlaylist(Title, AuthToken)
+}
+func (h Handler) FillYouTubePlaylist(playlist domain.Playlist, YoutubePlaylistId, AuthToken string) (*domain.Playlist, error) {
+	return h.youtubeService.FillYoutubePlaylist(playlist, YoutubePlaylistId, AuthToken)
 }

@@ -137,10 +137,10 @@ func (a *App) InitHandlers() {
 // ListenTgBot - todo - отредактировать хендлера под задачи
 func (a *App) ListenTgBot() {
 	go a.bot.Handle("/YoutubeSong", func(msg *tg.Message) { // Completed
-		go a.telegramHandler.YoutubeSong(msg)
+		go a.telegramHandler.GetYoutubeSong(msg)
 	})
 	go a.bot.Handle("/SpotifySong", func(msg *tg.Message) { // Completed
-		go a.telegramHandler.SpotifySong(msg)
+		go a.telegramHandler.GetSpotifySong(msg)
 	})
 	go a.bot.Handle("/Help", func(msg *tg.Message) { //  Completed
 		go a.telegramHandler.Help(msg)
@@ -149,23 +149,24 @@ func (a *App) ListenTgBot() {
 		go a.telegramHandler.FindSong(msg)
 	})
 	go a.bot.Handle("/FillYoutubePlaylist", func(msg *tg.Message) {
-		go a.telegramHandler.FillYoutubePlaylist(msg)
+		go a.telegramHandler.CreateFillYoutubePlaylist(msg)
 	})
 	go a.bot.Handle("/FillSpotifyPlaylist", func(msg *tg.Message) {
-		go a.telegramHandler.FillSpotifyPlaylist(msg)
+		go a.telegramHandler.CreateFillSpotifyPlaylist(msg)
 	})
 
 	a.bot.Handle(tg.OnText, func(msg *tg.Message) {
 		switch {
 		case a.ProcessingYoutubeMediaBySpotifySongLink.IfExist(msg.Chat.ID):
-			go a.telegramHandler.YoutubeSong(msg)
+			go a.telegramHandler.GetYoutubeSong(msg)
 		case a.ProcessingFindSongByMetadata.IfExist(msg.Chat.ID):
-
 			go a.telegramHandler.FindSong(msg)
 		case a.ProcessingSpotifySongByYoutubeMediaLink.IfExist(msg.Chat.ID):
-			go a.telegramHandler.SpotifySong(msg)
+			go a.telegramHandler.GetSpotifySong(msg)
 		case a.ProcessingCreateAndFillYoutubePlaylists.IfExist(msg.Chat.ID):
-			go a.telegramHandler.FillYoutubePlaylist(msg)
+			go a.telegramHandler.CreateFillYoutubePlaylist(msg)
+		case a.ProcessingCreateAndFillSpotifyPlaylists.IfExist(msg.Chat.ID):
+			go a.telegramHandler.CreateFillSpotifyPlaylist(msg)
 		}
 
 	})

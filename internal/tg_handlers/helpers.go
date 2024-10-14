@@ -6,11 +6,11 @@ import (
 	"log"
 )
 
-func (h Handler) GetYoutubeSong(msg *tg.Message) error {
+func (h Handler) GetYoutubeSongHelper(msg *tg.Message) error {
 	return h.workFlows.GetYoutubeSong(msg)
 }
 
-func (h Handler) GetSpotifySong(msg *tg.Message) error {
+func (h Handler) GetSpotifySongHelper(msg *tg.Message) error {
 	return h.workFlows.GetSpotifySong(msg)
 }
 
@@ -33,9 +33,12 @@ func (h Handler) HelpOut(msg *tg.Message) {
 	}
 
 }
-func (h Handler) GetSongsByMetadata(msg *tg.Message) error {
+func (h Handler) GetSongsByMetadataHelper(msg *tg.Message) error {
 	return h.workFlows.GetSongsByMetadata(msg)
 }
-func (h Handler) CreateAndFillYoutubePlaylist(msg *tg.Message) error {
+func (h Handler) CreateAndFillYoutubePlaylistHelper(msg *tg.Message) error {
 	return h.workFlows.CreateAndFillYoutubePlaylist(msg)
+}
+func (h Handler) CreateAndFillSpotifyPlaylistHelper(msg *tg.Message) error {
+	return h.workFlows.CreateAndFillSpotifyPlaylist(msg)
 }

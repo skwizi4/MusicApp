@@ -58,3 +58,43 @@ func (w WorkFlows) DeleteProcessingSpotifySongByYoutubeMediaLink(msg *tg.Message
 		w.logger.ErrorFrmt("Error deleting process:", err)
 	}
 }
+
+/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+
+// CreateAndFillSpotifyPlaylist - todo refactor
+func (w WorkFlows) CreateAndFillSpotifyPlaylist(msg *tg.Message) error {
+	process := w.ProcessingCreateAndFillSpotifyPlaylists.GetOrCreate(msg.Chat.ID)
+	switch process.Step {
+	case domain.ProcessCreateAndFillSpotifyPlaylistStart:
+		w.SendMsg(msg, "Send link of youtube playlist that you wanna transfer")
+		if err := w.ProcessingCreateAndFillSpotifyPlaylists.UpdateStep(domain.ProcessCreateAndFillSpotifyPlaylistEnd, msg.Chat.ID); err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			return err
+		}
+	case domain.ProcessCreateAndFillSpotifyPlaylistEnd:
+		playlist, err := w.YouTubeHandler.GetYoutubePlaylistByLink(msg.Text)
+		if err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			return err
+		}
+		if err = w.ProcessingCreateAndFillSpotifyPlaylists.AddTitle(playlist.Title, msg.Chat.ID); err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			return err
+		}
+		if err = w.ProcessingCreateAndFillSpotifyPlaylists.AddSongs(playlist.Songs, msg.Chat.ID); err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			return err
+		}
+		//Send Auth2.0 link
+		//Create playlist
+		//Fill playlist
+		//Return playlist
+	}
+	return nil
+}
