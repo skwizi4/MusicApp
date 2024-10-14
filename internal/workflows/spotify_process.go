@@ -5,7 +5,6 @@ import (
 	"MusicApp/internal/errors"
 	"fmt"
 	tg "gopkg.in/tucnak/telebot.v2"
-	"log"
 )
 
 func (w WorkFlows) GetSpotifySong(msg *tg.Message) error {
@@ -15,7 +14,6 @@ func (w WorkFlows) GetSpotifySong(msg *tg.Message) error {
 	case domain.ProcessSpotifySongByYouTubeMediaLinkStart:
 		w.SendMsg(msg, "Send link of song that you wanna find")
 		if err := w.ProcessingSpotifySongByYoutubeMediaLink.UpdateStep(domain.ProcessSpotifySongByYouTubeMediaLinkEnd, msg.Chat.ID); err != nil {
-			fmt.Println("ger")
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
 			return err
@@ -57,6 +55,46 @@ func (w WorkFlows) GetSpotifySong(msg *tg.Message) error {
 }
 func (w WorkFlows) DeleteProcessingSpotifySongByYoutubeMediaLink(msg *tg.Message) {
 	if err := w.ProcessingSpotifySongByYoutubeMediaLink.Delete(msg.Chat.ID); err != nil {
-		log.Println("Error deleting process:", err)
+		w.logger.ErrorFrmt("Error deleting process:", err)
 	}
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+
+// CreateAndFillSpotifyPlaylist - todo refactor
+func (w WorkFlows) CreateAndFillSpotifyPlaylist(msg *tg.Message) error {
+	process := w.ProcessingCreateAndFillSpotifyPlaylists.GetOrCreate(msg.Chat.ID)
+	switch process.Step {
+	case domain.ProcessCreateAndFillSpotifyPlaylistStart:
+		w.SendMsg(msg, "Send link of youtube playlist that you wanna transfer")
+		if err := w.ProcessingCreateAndFillSpotifyPlaylists.UpdateStep(domain.ProcessCreateAndFillSpotifyPlaylistEnd, msg.Chat.ID); err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			return err
+		}
+	case domain.ProcessCreateAndFillSpotifyPlaylistEnd:
+		playlist, err := w.YouTubeHandler.GetYoutubePlaylistByLink(msg.Text)
+		if err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			return err
+		}
+		if err = w.ProcessingCreateAndFillSpotifyPlaylists.AddTitle(playlist.Title, msg.Chat.ID); err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			return err
+		}
+		if err = w.ProcessingCreateAndFillSpotifyPlaylists.AddSongs(playlist.Songs, msg.Chat.ID); err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			return err
+		}
+		//Send Auth2.0 link
+		//Create playlist
+		//Fill playlist
+		//Return playlist
+	}
+	return nil
 }

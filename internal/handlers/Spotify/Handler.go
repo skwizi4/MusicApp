@@ -15,7 +15,10 @@ func (h Handler) GetSpotifySongByMetaData(metadata *domain.MetaData) (*domain.So
 func (h Handler) GetSpotifyPlaylistByLink(youtubeLink string) (*domain.Playlist, error) {
 	return h.spotifyService.GetSpotifyPlaylistDataByLink(youtubeLink)
 }
+func (h Handler) CreateSpotifyPlaylist(Title, AuthToken string) (string, error) {
+	return h.spotifyService.CreateSpotifyPlaylist(Title, AuthToken)
 
-func (h Handler) FillSpotifyPlaylist(playlist domain.Playlist) (*domain.Playlist, error) {
-	return h.spotifyService.CreateAndFillSpotifyPlaylist(playlist)
+}
+func (h Handler) FillSpotifyPlaylist(playlist domain.Playlist, AuthToken string) (*domain.Playlist, error) {
+	return h.spotifyService.FillSpotifyPlaylist(playlist, AuthToken)
 }

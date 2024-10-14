@@ -19,14 +19,18 @@ func InitMongo(uri, databaseName, collectionName string) (*MongoDB, error) {
 		return nil, err
 	}
 	collection := client.Database(databaseName).Collection(collectionName)
-
-	return &MongoDB{
+	MongoDb := &MongoDB{
 		Client:         client,
 		DatabaseName:   databaseName,
 		CollectionName: collectionName,
 		Logger:         logger.InitLogger(),
 		Collection:     collection,
-	}, nil
+	}
+	if MongoDb.Health()["message"] != "It's healthy" {
+		log.Fatalf("expected message to be 'It's healthy', got %s", MongoDb.Health()["message"])
+	}
+
+	return MongoDb, nil
 }
 
 func (m *MongoDB) Add(telegramId, token, refreshToken string) error {

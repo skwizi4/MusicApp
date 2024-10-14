@@ -60,15 +60,21 @@ func (p *ProcessingCreateAndFillSpotifyPlaylists) GetOrCreate(chatID int64) Proc
 	}
 	NewProcess := ProcessCreateAndFillSpotifyPlaylist{
 		ChatID: chatID,
-		Step:   ProcessSpotifyPlaylistStart,
+		Step:   ProcessCreateAndFillSpotifyPlaylistStart,
 	}
 	*p = append(*p, NewProcess)
 	return NewProcess
 
 }
-func (p *ProcessingCreateAndFillSpotifyPlaylists) AddSongs(playlist Playlist, chatID int64) error {
+func (p *ProcessingCreateAndFillSpotifyPlaylists) IfExist(chatID int64) bool {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].Playlist = playlist
+		return true
+	}
+	return false
+}
+func (p *ProcessingCreateAndFillSpotifyPlaylists) AddSongs(songs []Song, chatID int64) error {
+	if idx := FindUserIndex(*p, chatID); idx != -1 {
+		(*p)[idx].Playlist.Songs = songs
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)
@@ -82,7 +88,7 @@ func (p *ProcessingCreateAndFillSpotifyPlaylists) UpdateStep(step string, chatID
 }
 func (p *ProcessingCreateAndFillSpotifyPlaylists) AddTitle(title string, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].Title = title
+		(*p)[idx].Playlist.Title = title
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)

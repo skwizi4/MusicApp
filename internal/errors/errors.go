@@ -4,5 +4,5 @@ const (
 	ErrProcessingFindSongByMetadata = "cant end processingFindSongByMetadata"
 	ErrInvalidParamsSpotify         = "wrong request (invalid params for Youtube)"
 	ErrInvalidParamsYoutube         = "wrong request (invalid params for Youtube)"
-	ErrTryAgain                     = "ErrTryAgain"
+	ErrTryAgain                     = "Error try again later "
 )

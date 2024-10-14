@@ -19,8 +19,8 @@ const (
 	ProcessSongByMetadataArtist = "ProcessSongByMetadataArtist"
 	ProcessSongByMetadataEnd    = "ProcessSongByMetadataEnd"
 
-	ProcessSpotifyPlaylistStart = "ProcessSpotifyPlaylistStart"
-	ProcessSpotifyPlaylistEnd   = "ProcessSpotifyPlaylistEnd"
+	ProcessCreateAndFillSpotifyPlaylistStart = "ProcessCreateAndFillSpotifyPlaylistStart"
+	ProcessCreateAndFillSpotifyPlaylistEnd   = "ProcessCreateAndFillSpotifyPlaylistEnd"
 
 	ProcessFillYouTubePlaylistStart        = "ProcessFillYouTubePlaylistStart"
 	ProcessFillYouTubePlaylistSendAuthLink = "ProcessFillYouTubePlaylistSendAuthLink"
@@ -174,13 +174,6 @@ func (p *ProcessingFindSongByMetadata) AddTitle(chatID int64, title string) erro
 func (p *ProcessingFindSongByMetadata) AddArtist(chatID int64, artist string) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
 		(*p)[idx].Song.Artist = artist
-		return nil
-	}
-	return errors.New(ErrChatIDNotFound)
-}
-func (p *ProcessingFindSongByMetadata) ChangeIsGetMetadata(chatID int64, value bool) error {
-	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].IsGetMetadata = value
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)

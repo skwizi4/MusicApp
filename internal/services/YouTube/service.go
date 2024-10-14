@@ -2,7 +2,7 @@ package YouTube
 
 import (
 	"MusicApp/internal/domain"
-	"fmt"
+	"errors"
 	"net/http"
 )
 
@@ -92,24 +92,24 @@ func (y ServiceYouTube) GetYoutubeMediaByMetadata(data domain.MetaData) (*domain
 	return song, nil
 }
 
-// CreateAndFillYoutubePlaylist - Tested(OK)
-func (y ServiceYouTube) CreateAndFillYoutubePlaylist(SpotifyPlaylist domain.Playlist, token string) (*domain.Playlist, error) {
-	id, err := y.CreatePlaylist(token, SpotifyPlaylist.Title)
+// CreateYoutubePlaylist - Tested(OK)
+func (y ServiceYouTube) CreateYoutubePlaylist(Title string, token string) (string, error) {
+	id, err := y.CreatePlaylist(token, Title)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
+	return id, nil
 
-	YoutubePlaylist, err := y.FillYoutubePlaylist(token, id, SpotifyPlaylist.Songs)
+}
+
+func (y ServiceYouTube) FillYoutubePlaylist(SpotifyPlaylist domain.Playlist, YouTubePlaylistId, token string) (*domain.Playlist, error) {
+	YoutubePlaylist, err := y.WriteInPlaylist(token, YouTubePlaylistId, SpotifyPlaylist)
 	if err != nil {
 		return nil, err
 	}
 	if YoutubePlaylist == nil {
-		fmt.Println("err in filling playlist  ")
+		return nil, errors.New("YouTubePlaylist is nil")
 	}
-	YoutubePlaylist.Owner = SpotifyPlaylist.Owner
-	YoutubePlaylist.Title = SpotifyPlaylist.Title
-	YoutubePlaylist.Description = "Playlist Created by tg-bot"
-	YoutubePlaylist.ExternalUrl = fmt.Sprintf("https://youtube.com/playlist?list=%s", id)
 
 	return YoutubePlaylist, nil
 }

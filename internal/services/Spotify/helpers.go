@@ -14,6 +14,18 @@ import (
 	"strings"
 )
 
+func (s ServiceSpotify) CreateEndpointCreateAndFillSpotifyPlaylist(title, SpotifyUserId string) (string, io.Reader, error) {
+	if title == "" || SpotifyUserId == "" {
+		return "", nil, errs.New("error, title or SpotifyUserId is nil")
+	}
+	playlist := PlaylistCreateRequest{Name: title}
+	body, err := json.Marshal(playlist)
+	if err != nil {
+		return "", nil, err
+	}
+	return fmt.Sprintf("https://api.spotify.com/v1/users/" + SpotifyUserId + "/playlists"), body, nil
+}
+
 func (s ServiceSpotify) CreateEndpointSpotifyTrackByMetadata(title, artist string) (string, error) {
 
 	if title == "" || artist == "" {
@@ -38,6 +50,34 @@ func (s ServiceSpotify) CreateEndpointSpotifyTrackById(id string) (string, error
 	endpoint := "/v1/tracks/" + id
 	return endpoint, nil
 }
+
+func (s ServiceSpotify) createAndExecuteCreateSpotifyPlaylistRequset(method, endpoint string, body io.Reader) (*io.ReadCloser, error) {
+	if method == "" || endpoint == "" || body == nil {
+		return nil, errs.New("arguments  are nil")
+	}
+	Url := s.BaseUrl + endpoint
+	req, err := http.NewRequest(method, Url, body)
+	if err != nil {
+		return nil, err
+	}
+	if s.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+s.Token)
+	} else {
+		return nil, errs.New("token is empty")
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return &resp.Body, nil
+}
+
 func (s ServiceSpotify) createAndExecuteRequest(method, endpoint string) (*io.ReadCloser, error) {
 	Url := s.BaseUrl + endpoint
 	req, err := http.NewRequest(method, Url, nil)
@@ -91,9 +131,7 @@ func (s ServiceSpotify) decodeRespPlaylistId(body *io.ReadCloser) (*domain.Playl
 	p.Owner = playlist.Owner.DisplayName
 	p.ExternalUrl = playlist.ExternalURL.Spotify
 	p.Songs = make([]domain.Song, len(playlist.Tracks.Items))
-	fmt.Println(playlist)
 	for i, song := range playlist.Tracks.Items {
-		fmt.Println(len(p.Songs), len(playlist.Tracks.Items))
 		p.Songs[i] = domain.Song{
 			Title:  song.Track.Name,
 			Artist: song.Track.Artists[0].Name,
@@ -102,7 +140,7 @@ func (s ServiceSpotify) decodeRespPlaylistId(body *io.ReadCloser) (*domain.Playl
 	}
 	return &p, nil
 }
-func (s ServiceSpotify) decodeRespTrackByName(body *io.ReadCloser) (*domain.Song, error) {
+func (s ServiceSpotify) decodeSpotifyRespTrackByMetadata(body *io.ReadCloser) (*domain.Song, error) {
 
 	var track spotifySongByMetadata
 	if err := json.NewDecoder(*body).Decode(&track); err != nil {
@@ -120,6 +158,19 @@ func (s ServiceSpotify) decodeRespTrackByName(body *io.ReadCloser) (*domain.Song
 		Album:  track.Tracks.Items[0].Album.Name,
 		Link:   track.Tracks.Items[0].ExternalURL.Spotify,
 	}, nil
+}
+func (s ServiceSpotify) decodeRespCreateSpotifyPlaylist(body *io.ReadCloser) (string, error) {
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(*body).Decode(&result); err != nil {
+		return "", errs.New("can't decode response")
+	}
+
+	// Предположим, что ID находится под ключом "id"
+	if id, ok := result["id"].(string); ok {
+		return id, nil
+	}
+	return "", errs.New("id not found in response")
 }
 
 func GetID(url string) (string, error) {

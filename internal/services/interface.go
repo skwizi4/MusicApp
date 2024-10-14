@@ -7,12 +7,14 @@ type (
 		GetSpotifyTrackMetadataByLink(link string) (*domain.Song, error) // ok
 		GetSpotifyPlaylistDataByLink(link string) (*domain.Playlist, error)
 		GetSpotifyTrackByMetadata(data domain.MetaData) (*domain.Song, error)
-		CreateAndFillSpotifyPlaylist(playlist domain.Playlist) (*domain.Playlist, error)
+		CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId string) (string, error)
+		FillSpotifyPlaylist(YouTubePlaylist domain.Playlist, AuthToken, SpotifyPlaylistId string) (*domain.Playlist, error)
 	}
 	YouTubeService interface {
 		GetYoutubeMediaByLink(link string) (*domain.Song, error)
 		GetYoutubePlaylistDataByLink(link string) (*domain.Playlist, error)
 		GetYoutubeMediaByMetadata(data domain.MetaData) (*domain.Song, error) // ok
-		CreateAndFillYoutubePlaylist(playlist domain.Playlist, token string) (*domain.Playlist, error)
+		CreateYoutubePlaylist(Title string, token string) (string, error)
+		FillYoutubePlaylist(SpotifyPlaylist domain.Playlist, YoutubePlaylistId, token string) (*domain.Playlist, error)
 	}
 )

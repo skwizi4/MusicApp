@@ -145,7 +145,7 @@ func (y ServiceYouTube) CreatePlaylist(token, playlistTitle string) (string, err
 	payload := []byte(fmt.Sprintf(`{
 		"snippet": {
 			"title": "%s",
-			"description": ""
+			"description": "Playlist created by tg_bot MusicApp"
 		},
 		"status": {
 			"privacyStatus": "public"
@@ -161,6 +161,7 @@ func (y ServiceYouTube) CreatePlaylist(token, playlistTitle string) (string, err
 	if err != nil {
 		return "", err
 	}
+	//todo refactor
 	var PlaylistId youtubePlaylistIdResp
 	if err = json.NewDecoder(resp.Body).Decode(&PlaylistId); err != nil {
 		return "", errs.New("can't decode response")
@@ -168,9 +169,9 @@ func (y ServiceYouTube) CreatePlaylist(token, playlistTitle string) (string, err
 	return PlaylistId.ID, nil
 }
 
-func (y ServiceYouTube) FillYoutubePlaylist(token, playlistId string, tracks []domain.Song) (*domain.Playlist, error) {
+func (y ServiceYouTube) WriteInPlaylist(token, playlistId string, SpotifyPlaylist domain.Playlist) (*domain.Playlist, error) {
 	var YoutubePlaylist = &domain.Playlist{}
-	for i, track := range tracks {
+	for i, track := range SpotifyPlaylist.Songs {
 		song, err := y.GetYoutubeMediaByMetadata(domain.MetaData{Title: track.Title, Artist: track.Artist})
 		if err != nil {
 			return nil, err
@@ -184,24 +185,32 @@ func (y ServiceYouTube) FillYoutubePlaylist(token, playlistId string, tracks []d
 				}
 			}
 		}`, playlistId, song.Id))
-		fmt.Println(song.Link)
 		req, _ := http.NewRequest("POST", "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", bytes.NewBuffer(payload))
 		req.Header.Add("Authorization", "Bearer "+token)
 		req.Header.Add("Content-Type", "application/json")
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(750 * time.Millisecond)
 		resp, err := http.DefaultClient.Do(req)
+		if resp.StatusCode != 200 {
+			if resp.StatusCode == 409 {
+				resp, err = http.DefaultClient.Do(req)
+
+			}
+			return nil, errs.New(resp.Status)
+		}
+
 		if err != nil {
 			return nil, err
 		}
-
-		if resp.StatusCode != 200 {
-			return nil, errs.New(resp.Status)
-		}
 		YoutubePlaylist.Songs = append(YoutubePlaylist.Songs, *song)
-		if i == len(tracks) {
+		if i == len(SpotifyPlaylist.Songs)-1 {
 			break
 		}
 
 	}
+	YoutubePlaylist.Owner = SpotifyPlaylist.Owner
+	YoutubePlaylist.Title = SpotifyPlaylist.Title
+	YoutubePlaylist.Description = "Playlist created by tg_bot MusicApp"
+	YoutubePlaylist.ExternalUrl = fmt.Sprintf("https://youtube.com/playlist?list=%s", playlistId)
+
 	return YoutubePlaylist, nil
 }
