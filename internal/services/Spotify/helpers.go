@@ -91,9 +91,7 @@ func (s ServiceSpotify) decodeRespPlaylistId(body *io.ReadCloser) (*domain.Playl
 	p.Owner = playlist.Owner.DisplayName
 	p.ExternalUrl = playlist.ExternalURL.Spotify
 	p.Songs = make([]domain.Song, len(playlist.Tracks.Items))
-	fmt.Println(playlist)
 	for i, song := range playlist.Tracks.Items {
-		fmt.Println(len(p.Songs), len(playlist.Tracks.Items))
 		p.Songs[i] = domain.Song{
 			Title:  song.Track.Name,
 			Artist: song.Track.Artists[0].Name,

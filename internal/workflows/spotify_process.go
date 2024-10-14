@@ -5,7 +5,6 @@ import (
 	"MusicApp/internal/errors"
 	"fmt"
 	tg "gopkg.in/tucnak/telebot.v2"
-	"log"
 )
 
 func (w WorkFlows) GetSpotifySong(msg *tg.Message) error {
@@ -15,7 +14,6 @@ func (w WorkFlows) GetSpotifySong(msg *tg.Message) error {
 	case domain.ProcessSpotifySongByYouTubeMediaLinkStart:
 		w.SendMsg(msg, "Send link of song that you wanna find")
 		if err := w.ProcessingSpotifySongByYoutubeMediaLink.UpdateStep(domain.ProcessSpotifySongByYouTubeMediaLinkEnd, msg.Chat.ID); err != nil {
-			fmt.Println("ger")
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
 			return err
@@ -57,6 +55,6 @@ func (w WorkFlows) GetSpotifySong(msg *tg.Message) error {
 }
 func (w WorkFlows) DeleteProcessingSpotifySongByYoutubeMediaLink(msg *tg.Message) {
 	if err := w.ProcessingSpotifySongByYoutubeMediaLink.Delete(msg.Chat.ID); err != nil {
-		log.Println("Error deleting process:", err)
+		w.logger.ErrorFrmt("Error deleting process:", err)
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"MusicApp/internal/errors"
 	"fmt"
 	tg "gopkg.in/tucnak/telebot.v2"
-	"log"
 )
 
 func (w WorkFlows) GetSongsByMetadata(msg *tg.Message) error {
@@ -14,7 +13,6 @@ func (w WorkFlows) GetSongsByMetadata(msg *tg.Message) error {
 	switch process.Step {
 	case domain.ProcessSongByMetadataStart:
 		w.SendMsg(msg, "Send Title of song that you wanna find")
-
 		if err := w.ProcessingFindSongByMetadata.UpdateStep(domain.ProcessSongByMetadataTitle, msg.Chat.ID); err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingFindSongByMetadata(msg)
@@ -22,7 +20,11 @@ func (w WorkFlows) GetSongsByMetadata(msg *tg.Message) error {
 		}
 
 	case domain.ProcessSongByMetadataTitle:
-
+		if msg.Text == "/exit" {
+			w.SendMsg(msg, "Process stopped")
+			w.DeleteProcessingYoutubeMediaBySpotifySongID(msg)
+			return nil
+		}
 		if err := w.ProcessingFindSongByMetadata.AddTitle(msg.Chat.ID, msg.Text); err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingFindSongByMetadata(msg)
@@ -36,6 +38,11 @@ func (w WorkFlows) GetSongsByMetadata(msg *tg.Message) error {
 			return err
 		}
 	case domain.ProcessSongByMetadataArtist:
+		if msg.Text == "/exit" {
+			w.SendMsg(msg, "Process stopped")
+			w.DeleteProcessingYoutubeMediaBySpotifySongID(msg)
+			return nil
+		}
 		if err := w.ProcessingFindSongByMetadata.AddArtist(msg.Chat.ID, msg.Text); err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingFindSongByMetadata(msg)
@@ -43,22 +50,16 @@ func (w WorkFlows) GetSongsByMetadata(msg *tg.Message) error {
 		}
 		w.SendMsg(msg, "wait a second ....")
 
-		if err := w.ProcessingFindSongByMetadata.ChangeIsGetMetadata(msg.Chat.ID, true); err != nil {
-			w.SendMsg(msg, errors.ErrTryAgain)
+		if err := w.Search(msg); err != nil {
 			w.DeleteProcessingFindSongByMetadata(msg)
 			return err
 		}
-		err := w.Search(msg)
-		if err != nil {
-			w.SendMsg(msg, errors.ErrTryAgain)
-		}
-
 	}
 	return nil
 }
 func (w WorkFlows) DeleteProcessingFindSongByMetadata(msg *tg.Message) {
 	if err := w.ProcessingFindSongByMetadata.Delete(msg.Chat.ID); err != nil {
-		log.Println("Error deleting process:", err)
+		w.logger.ErrorFrmt("Error deleting process:", err)
 	}
 }
 func (w WorkFlows) Search(msg *tg.Message) error {
