@@ -3,12 +3,9 @@ package workflows
 import (
 	"MusicApp/internal/domain"
 	"MusicApp/internal/errors"
-	errs "errors"
 	"fmt"
-	"go.mongodb.org/mongo-driver/mongo"
 	tg "gopkg.in/tucnak/telebot.v2"
 	"strconv"
-	"time"
 )
 
 // GetYoutubeSong - completed
@@ -87,31 +84,40 @@ func (w WorkFlows) CreateAndFillYoutubePlaylist(msg *tg.Message) error {
 			w.DeleteProcessingYoutubeMediaBySpotifySongID(msg)
 			return nil
 		}
-		playlist, err := w.SpotifyHandler.GetSpotifyPlaylistByLink(msg.Text)
+		SpotifyPlaylist, err := w.SpotifyHandler.GetSpotifyPlaylistByLink(msg.Text)
 		if err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingCreateAndFillYoutubePlaylists(msg)
 			return err
 		}
-		if err = w.ProcessingCreateAndFillYoutubePlaylists.AddTitle(playlist.Title, msg.Chat.ID); err != nil {
+		if err = w.ProcessingCreateAndFillYoutubePlaylists.AddTitle(SpotifyPlaylist.Title, msg.Chat.ID); err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingCreateAndFillYoutubePlaylists(msg)
 			return err
 		}
-		if err = w.ProcessingCreateAndFillYoutubePlaylists.AddSongs(*playlist, msg.Chat.ID); err != nil {
+		if err = w.ProcessingCreateAndFillYoutubePlaylists.AddSongs(SpotifyPlaylist, msg.Chat.ID); err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingCreateAndFillYoutubePlaylists(msg)
 			return err
 		}
+		TelegramId := strconv.FormatInt(msg.Sender.ID, 10)
 		w.SendMsg(msg, fmt.Sprintf("https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=https://www.googleapis.com/auth/youtube&access_type=offline&state=%s&prompt=consent",
-			w.cfg.YoutubeCfg.ClientID, w.cfg.YoutubeCfg.RedirectUrl, strconv.FormatInt(msg.Sender.ID, 10)))
-		if err = w.CheckForToken(msg); err != nil {
+			w.cfg.YoutubeCfg.ClientID, w.cfg.YoutubeCfg.RedirectUrl, TelegramId))
+		UserProcess := fmt.Sprintf("YoutubeProcess%s", TelegramId)
+		token, err := w.CheckForToken(msg, UserProcess)
+		if err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingCreateAndFillYoutubePlaylists(msg)
 			return err
 		}
 		process = w.ProcessingCreateAndFillYoutubePlaylists.GetOrCreate(msg.Chat.ID)
-		youtubePlaylist, err := w.YouTubeHandler.CreateAndFillYoutubePlaylist(process.Playlist, process.AuthToken)
+		playlistId, err := w.YouTubeHandler.CreateYoutubePlaylist(process.Playlist.Title, token)
+		if err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingCreateAndFillYoutubePlaylists(msg)
+			return err
+		}
+		youtubePlaylist, err := w.YouTubeHandler.FillYouTubePlaylist(SpotifyPlaylist, playlistId, token)
 		if err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingCreateAndFillYoutubePlaylists(msg)
@@ -124,46 +130,6 @@ func (w WorkFlows) CreateAndFillYoutubePlaylist(msg *tg.Message) error {
 	return nil
 }
 
-func (w WorkFlows) CheckForToken(msg *tg.Message) error {
-	telegramID := strconv.FormatInt(msg.Sender.ID, 10)
-	timeout := time.After(90 * time.Second)
-	ticker := time.NewTicker(2500 * time.Millisecond)
-
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-timeout:
-			w.SendMsg(msg, "Authorization timeout. Please try again.")
-			w.DeleteProcessingCreateAndFillYoutubePlaylists(msg)
-			return errs.New("authorization timeout")
-		case <-ticker.C:
-			data, err := w.mongo.Get(telegramID)
-			if err != nil {
-				if errs.Is(err, mongo.ErrNoDocuments) {
-					continue
-				} else {
-					w.SendMsg(msg, errors.ErrTryAgain)
-					w.DeleteProcessingCreateAndFillYoutubePlaylists(msg)
-					return err
-				}
-			}
-			if err = w.ProcessingCreateAndFillYoutubePlaylists.AddAuthToken(data.Token, msg.Chat.ID); err != nil {
-				w.SendMsg(msg, errors.ErrTryAgain)
-				w.DeleteProcessingCreateAndFillYoutubePlaylists(msg)
-				return err
-			}
-			if err = w.mongo.Delete(telegramID); err != nil {
-				w.SendMsg(msg, errors.ErrTryAgain)
-				w.DeleteProcessingCreateAndFillYoutubePlaylists(msg)
-				return err
-
-			}
-			w.SendMsg(msg, "Authorization completed! Processing creating playlist...")
-			return nil
-		}
-	}
-}
 func (w WorkFlows) DeleteProcessingCreateAndFillYoutubePlaylists(msg *tg.Message) {
 	if err := w.ProcessingCreateAndFillYoutubePlaylists.Delete(msg.Chat.ID); err != nil {
 		w.logger.ErrorFrmt("Error deleting process:", err)

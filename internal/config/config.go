@@ -19,6 +19,7 @@ type (
 	SpotifyConfig struct {
 		ClientID     string `json:"client_id"`
 		ClientSecret string `json:"client_secret"`
+		RedirectUrl  string `json:"redirect_url"`
 	}
 	YoutubeConfig struct {
 		Key         string `json:"key"`

@@ -102,7 +102,7 @@ func (y ServiceYouTube) CreateYoutubePlaylist(Title string, token string) (strin
 
 }
 
-func (y ServiceYouTube) FillYoutubePlaylist(SpotifyPlaylist domain.Playlist, YouTubePlaylistId, token string) (*domain.Playlist, error) {
+func (y ServiceYouTube) FillYoutubePlaylist(SpotifyPlaylist *domain.Playlist, YouTubePlaylistId, token string) (*domain.Playlist, error) {
 	YoutubePlaylist, err := y.WriteInPlaylist(token, YouTubePlaylistId, SpotifyPlaylist)
 	if err != nil {
 		return nil, err

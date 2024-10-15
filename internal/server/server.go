@@ -15,16 +15,17 @@ import (
 
 type TokenResponse struct {
 	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	Scope        string `json:"scope"`
 	ExpiresIn    int    `json:"expires_in"`
 	RefreshToken string `json:"refresh_token"`
-	Scope        string `json:"scope"`
-	TokenType    string `json:"token_type"`
 }
 
 type Server struct {
 	port   int
 	logger logs.GoLogger
 	db     server_database.Service
+	Client *http.Client
 }
 
 func NewServer() *http.Server {
@@ -37,6 +38,7 @@ func NewServer() *http.Server {
 		port:   port,
 		logger: logs.InitLogger(),
 		db:     db,
+		Client: &http.Client{},
 	}
 
 	// Declare Server config
@@ -47,6 +49,5 @@ func NewServer() *http.Server {
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
-	fmt.Println(server.Addr)
 	return server
 }

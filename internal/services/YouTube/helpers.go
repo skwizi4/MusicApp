@@ -169,7 +169,7 @@ func (y ServiceYouTube) CreatePlaylist(token, playlistTitle string) (string, err
 	return PlaylistId.ID, nil
 }
 
-func (y ServiceYouTube) WriteInPlaylist(token, playlistId string, SpotifyPlaylist domain.Playlist) (*domain.Playlist, error) {
+func (y ServiceYouTube) WriteInPlaylist(token, playlistId string, SpotifyPlaylist *domain.Playlist) (*domain.Playlist, error) {
 	var YoutubePlaylist = &domain.Playlist{}
 	for i, track := range SpotifyPlaylist.Songs {
 		song, err := y.GetYoutubeMediaByMetadata(domain.MetaData{Title: track.Title, Artist: track.Artist})

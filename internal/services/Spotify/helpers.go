@@ -3,6 +3,7 @@ package Spotify
 import (
 	"MusicApp/internal/domain"
 	"MusicApp/internal/errors"
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	errs "errors"
@@ -14,19 +15,20 @@ import (
 	"strings"
 )
 
-func (s ServiceSpotify) CreateEndpointCreateAndFillSpotifyPlaylist(title, SpotifyUserId string) (string, io.Reader, error) {
+func (s ServiceSpotify) MakeEndpointCreateSpotifyPlaylist(title, SpotifyUserId string) (string, io.Reader, error) {
 	if title == "" || SpotifyUserId == "" {
 		return "", nil, errs.New("error, title or SpotifyUserId is nil")
 	}
-	playlist := PlaylistCreateRequest{Name: title}
-	body, err := json.Marshal(playlist)
+	body, err := json.Marshal(PlaylistCreateRequest{Name: title})
 	if err != nil {
 		return "", nil, err
 	}
-	return fmt.Sprintf("https://api.spotify.com/v1/users/" + SpotifyUserId + "/playlists"), body, nil
+
+	//todo refactor
+	return fmt.Sprintf("/v1/users/" + "ya9tkj10lvw2uva3iy11sby75" + "/playlists"), bytes.NewBuffer(body), nil
 }
 
-func (s ServiceSpotify) CreateEndpointSpotifyTrackByMetadata(title, artist string) (string, error) {
+func (s ServiceSpotify) MakeEndpointSpotifyTrackByMetadata(title, artist string) (string, error) {
 
 	if title == "" || artist == "" {
 		return "", errs.New("title or artist is empty")
@@ -36,14 +38,14 @@ func (s ServiceSpotify) CreateEndpointSpotifyTrackByMetadata(title, artist strin
 		"%26type%3Dtrack%26offset%3D5%26limit%3D10&type=track"
 	return endpoint, nil
 }
-func (s ServiceSpotify) CreateEndpointSpotifyPlaylistById(id string) (string, error) {
+func (s ServiceSpotify) MakeEndpointSpotifyPlaylistById(id string) (string, error) {
 	if id == "" {
 		return "", errs.New("id is empty")
 	}
 	endpoint := "/v1/playlists/" + id
 	return endpoint, nil
 }
-func (s ServiceSpotify) CreateEndpointSpotifyTrackById(id string) (string, error) {
+func (s ServiceSpotify) MakeEndpointSpotifyTrackById(id string) (string, error) {
 	if id == "" {
 		return "", errs.New("id  is empty")
 	}
@@ -65,13 +67,17 @@ func (s ServiceSpotify) createAndExecuteCreateSpotifyPlaylistRequset(method, end
 	} else {
 		return nil, errs.New("token is empty")
 	}
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(string(respBody))
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
@@ -157,6 +163,7 @@ func (s ServiceSpotify) decodeSpotifyRespTrackByMetadata(body *io.ReadCloser) (*
 		Artist: track.Tracks.Items[0].Artists[0].Name,
 		Album:  track.Tracks.Items[0].Album.Name,
 		Link:   track.Tracks.Items[0].ExternalURL.Spotify,
+		Id:     track.Tracks.Items[0].ID,
 	}, nil
 }
 func (s ServiceSpotify) decodeRespCreateSpotifyPlaylist(body *io.ReadCloser) (string, error) {

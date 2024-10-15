@@ -5,10 +5,13 @@ import (
 	"MusicApp/internal/domain"
 	"MusicApp/internal/handlers"
 	"MusicApp/internal/repo/MongoDB"
+	errs "errors"
 	"github.com/skwizi4/lib/ErrChan"
 	logger "github.com/skwizi4/lib/logs"
+	"go.mongodb.org/mongo-driver/mongo"
 	tg "gopkg.in/tucnak/telebot.v2"
 	"log"
+	"time"
 )
 
 type WorkFlows struct {
@@ -57,4 +60,33 @@ func (w WorkFlows) SendMsg(msg *tg.Message, outText string) {
 		log.Fatalf("Critical error: Telegram bot failed to send message: %v", err)
 	}
 
+}
+func (w WorkFlows) CheckForToken(msg *tg.Message, UserProcess string) (string, error) {
+	timeout := time.After(90 * time.Second)
+	ticker := time.NewTicker(2500 * time.Millisecond)
+
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-timeout:
+			return "", errs.New("authorization timeout")
+		case <-ticker.C:
+			data, err := w.mongo.Get(UserProcess)
+			if err != nil {
+				if errs.Is(err, mongo.ErrNoDocuments) {
+					continue
+				} else {
+					return "", err
+				}
+			}
+
+			if err = w.mongo.Delete(UserProcess); err != nil {
+				return "", err
+
+			}
+			w.SendMsg(msg, "Authorization completed! Processing creating playlist...")
+			return data.Token, nil
+		}
+	}
 }

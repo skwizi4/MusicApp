@@ -30,7 +30,7 @@ type Mongo struct {
 }
 type AuthParams struct {
 	Token        string `json:"token" bson:"token"`
-	TelegramID   string `json:"telegramId" bson:"telegram_Id"`
+	UserProcess  string `json:"user_process" bson:"user_process"`
 	RefreshToken string `json:"refreshToken" bson:"refresh_Token"`
 }
 
