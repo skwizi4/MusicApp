@@ -50,9 +50,9 @@ func (p *ProcessingCreateAndFillYoutubePlaylists) GetOrCreate(chatID int64) Proc
 	return NewProcess
 }
 
-func (p *ProcessingCreateAndFillYoutubePlaylists) AddSongs(playlist Playlist, chatID int64) error {
+func (p *ProcessingCreateAndFillYoutubePlaylists) AddSongs(playlist *Playlist, chatID int64) error {
 	if idx := FindUserIndex(*p, chatID); idx != -1 {
-		(*p)[idx].Playlist = playlist
+		(*p)[idx].Playlist = *playlist
 		return nil
 	}
 	return errors.New(ErrChatIDNotFound)

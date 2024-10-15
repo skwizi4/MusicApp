@@ -33,10 +33,10 @@ func InitMongo(uri, databaseName, collectionName string) (*MongoDB, error) {
 	return MongoDb, nil
 }
 
-func (m *MongoDB) Add(telegramId, token, refreshToken string) error {
+func (m *MongoDB) Add(UserProcess, token, refreshToken string) error {
 	AuthParam := server_database.AuthParams{
 		Token:        token,
-		TelegramID:   telegramId,
+		UserProcess:  UserProcess,
 		RefreshToken: refreshToken,
 	}
 	_, err := m.Collection.InsertOne(context.Background(), AuthParam)
@@ -45,8 +45,8 @@ func (m *MongoDB) Add(telegramId, token, refreshToken string) error {
 	}
 	return nil
 }
-func (m *MongoDB) Update(telegramId, token, refreshToken string) error {
-	filter := bson.D{{Key: "telegram_Id", Value: telegramId}}
+func (m *MongoDB) Update(UserProcess, token, refreshToken string) error {
+	filter := bson.D{{Key: "user_process", Value: UserProcess}}
 	update := bson.D{
 		{"$set", bson.D{
 			{"token", token},
@@ -60,17 +60,17 @@ func (m *MongoDB) Update(telegramId, token, refreshToken string) error {
 	fmt.Println(res)
 	return nil
 }
-func (m *MongoDB) Delete(telegramId string) error {
-	_, err := m.Collection.DeleteOne(context.Background(), bson.D{{Key: "telegram_Id", Value: telegramId}})
+func (m *MongoDB) Delete(UserProcess string) error {
+	_, err := m.Collection.DeleteOne(context.Background(), bson.D{{Key: "user_process", Value: UserProcess}})
 	if err != nil {
 		return err
 	}
 	return nil
 
 }
-func (m *MongoDB) Get(telegramId string) (*server_database.AuthParams, error) {
+func (m *MongoDB) Get(UserProcess string) (*server_database.AuthParams, error) {
 	var user server_database.AuthParams
-	filter := bson.D{{Key: "telegram_Id", Value: telegramId}}
+	filter := bson.D{{Key: "user_process", Value: UserProcess}}
 	if err := m.Collection.FindOne(context.Background(), filter).Decode(&user); err != nil {
 		return nil, err
 	}

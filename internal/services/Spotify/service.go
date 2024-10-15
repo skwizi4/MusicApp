@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"fmt"
 	logger "github.com/skwizi4/lib/logs"
+	"io"
+	"log"
 	"net/http"
 )
 
@@ -26,7 +28,7 @@ func (s ServiceSpotify) GetSpotifyTrackMetadataByLink(link string) (*domain.Song
 	if err != nil {
 		return nil, err
 	}
-	endpoint, err := s.CreateEndpointSpotifyTrackById(id)
+	endpoint, err := s.MakeEndpointSpotifyTrackById(id)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +61,7 @@ func (s ServiceSpotify) GetSpotifyPlaylistDataByLink(link string) (*domain.Playl
 	if err != nil {
 		return nil, err
 	}
-	endpoint, err := s.CreateEndpointSpotifyPlaylistById(id)
+	endpoint, err := s.MakeEndpointSpotifyPlaylistById(id)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +79,7 @@ func (s ServiceSpotify) GetSpotifyPlaylistDataByLink(link string) (*domain.Playl
 
 // todo GetSpotifyTrackByMetadata  -refactor
 func (s ServiceSpotify) GetSpotifyTrackByMetadata(data domain.MetaData) (*domain.Song, error) {
-	endpoint, err := s.CreateEndpointSpotifyTrackByMetadata(data.Title, data.Artist)
+	endpoint, err := s.MakeEndpointSpotifyTrackByMetadata(data.Title, data.Artist)
 	if err != nil {
 		return nil, err
 	}
@@ -98,12 +100,12 @@ func (s ServiceSpotify) GetSpotifyTrackByMetadata(data domain.MetaData) (*domain
 }
 func (s ServiceSpotify) CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId string) (string, error) {
 
-	endpoint, body, err := s.CreateEndpointCreateAndFillSpotifyPlaylist(Title, SpotifyUserId)
+	endpoint, body, err := s.MakeEndpointCreateSpotifyPlaylist(Title, SpotifyUserId)
 	if err != nil {
 		return "", err
 	}
-
-	resp, err := s.createAndExecuteCreateSpotifyPlaylistRequset(http.MethodGet, endpoint, body)
+	s.Token = AuthToken
+	resp, err := s.createAndExecuteCreateSpotifyPlaylistRequset(http.MethodPost, endpoint, body)
 	if err != nil {
 		return "", err
 	}
@@ -115,22 +117,29 @@ func (s ServiceSpotify) CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId st
 
 	return id, nil
 }
-func (s ServiceSpotify) FillSpotifyPlaylist(YouTubePlaylist domain.Playlist, AuthToken, SpotifyPlaylistId string) (*domain.Playlist, error) {
+func (s ServiceSpotify) FillSpotifyPlaylist(YouTubePlaylist *domain.Playlist, SpotifyPlaylistId, AuthToken string) (*domain.Playlist, error) {
 	SpotifyPlaylist := &domain.Playlist{}
 	for i, track := range YouTubePlaylist.Songs {
 		Song, err := s.GetSpotifyTrackByMetadata(domain.MetaData{Title: track.Title, Artist: track.Artist})
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println(Song.Id)
+		fmt.Println(SpotifyPlaylistId)
 		req, _ := http.NewRequest("POST", fmt.Sprintf("https://api.spotify.com/v1/playlists/%s/tracks", SpotifyPlaylistId), bytes.NewBuffer([]byte(fmt.Sprintf(`{"uris": ["spotify:track:%s"]}`, Song.Id))))
 		req.Header.Add("Authorization", "Bearer "+AuthToken)
 		req.Header.Add("Content-Type", "application/json")
-		client := &http.Client{}
-		resp, err := client.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return nil, err
 		}
-		if resp.StatusCode != 200 {
+		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(string(body))
 			return nil, fmt.Errorf(resp.Status)
 		}
 		SpotifyPlaylist.Songs = append(SpotifyPlaylist.Songs, *Song)
@@ -141,6 +150,6 @@ func (s ServiceSpotify) FillSpotifyPlaylist(YouTubePlaylist domain.Playlist, Aut
 	SpotifyPlaylist.Owner = YouTubePlaylist.Owner
 	SpotifyPlaylist.Title = YouTubePlaylist.Title
 	SpotifyPlaylist.Description = "Playlist created by tg_bot MusicApp"
-	SpotifyPlaylist.ExternalUrl = fmt.Sprintf("https://youtube.com/playlist?list=%s", SpotifyPlaylistId)
+	SpotifyPlaylist.ExternalUrl = fmt.Sprintf("https://open.spotify.com/playlist/%s", SpotifyPlaylistId)
 	return SpotifyPlaylist, nil
 }

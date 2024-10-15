@@ -22,10 +22,10 @@ func (s *Mongo) Health() map[string]string {
 	}
 }
 
-func (s *Mongo) Add(telegramId, token, refreshToken string) error {
+func (s *Mongo) Add(UserProcess, token, refreshToken string) error {
 	AuthParam := AuthParams{
 		Token:        token,
-		TelegramID:   telegramId,
+		UserProcess:  UserProcess,
 		RefreshToken: refreshToken,
 	}
 	_, err := s.Collection.InsertOne(context.Background(), AuthParam)
@@ -34,8 +34,8 @@ func (s *Mongo) Add(telegramId, token, refreshToken string) error {
 	}
 	return nil
 }
-func (s *Mongo) Update(telegramId, token, refreshToken string) error {
-	filter := bson.D{{Key: "telegram_Id", Value: telegramId}}
+func (s *Mongo) Update(UserProcess, token, refreshToken string) error {
+	filter := bson.D{{Key: "user_process", Value: UserProcess}}
 	update := bson.D{
 		{"$set", bson.D{
 			{"token", token},
@@ -49,17 +49,17 @@ func (s *Mongo) Update(telegramId, token, refreshToken string) error {
 	fmt.Println(res)
 	return nil
 }
-func (s *Mongo) Delete(telegramId string) error {
-	_, err := s.Collection.DeleteOne(context.Background(), bson.D{{Key: "telegram_Id", Value: telegramId}})
+func (s *Mongo) Delete(UserProcess string) error {
+	_, err := s.Collection.DeleteOne(context.Background(), bson.D{{Key: "user_process", Value: UserProcess}})
 	if err != nil {
 		return err
 	}
 	return nil
 
 }
-func (s *Mongo) Get(telegramId string) (*AuthParams, error) {
+func (s *Mongo) Get(UserProcess string) (*AuthParams, error) {
 	var user AuthParams
-	filter := bson.D{{Key: "telegram_Id", Value: telegramId}}
+	filter := bson.D{{Key: "user_process", Value: UserProcess}}
 	if err := s.Collection.FindOne(context.Background(), filter).Decode(&user); err != nil {
 		return nil, err
 	}

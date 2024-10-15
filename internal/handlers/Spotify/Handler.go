@@ -15,10 +15,12 @@ func (h Handler) GetSpotifySongByMetaData(metadata *domain.MetaData) (*domain.So
 func (h Handler) GetSpotifyPlaylistByLink(youtubeLink string) (*domain.Playlist, error) {
 	return h.spotifyService.GetSpotifyPlaylistDataByLink(youtubeLink)
 }
-func (h Handler) CreateSpotifyPlaylist(Title, AuthToken string) (string, error) {
-	return h.spotifyService.CreateSpotifyPlaylist(Title, AuthToken)
+
+// CreateSpotifyPlaylist todo refactor
+func (h Handler) CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId string) (string, error) {
+	return h.spotifyService.CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId)
 
 }
-func (h Handler) FillSpotifyPlaylist(playlist domain.Playlist, AuthToken string) (*domain.Playlist, error) {
-	return h.spotifyService.FillSpotifyPlaylist(playlist, AuthToken)
+func (h Handler) FillSpotifyPlaylist(playlist *domain.Playlist, playlistId, AuthToken string) (*domain.Playlist, error) {
+	return h.spotifyService.FillSpotifyPlaylist(playlist, playlistId, AuthToken)
 }

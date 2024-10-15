@@ -5,6 +5,8 @@ import (
 	"MusicApp/internal/errors"
 	"fmt"
 	tg "gopkg.in/tucnak/telebot.v2"
+	"net/url"
+	"strconv"
 )
 
 func (w WorkFlows) GetSpotifySong(msg *tg.Message) error {
@@ -68,33 +70,73 @@ func (w WorkFlows) CreateAndFillSpotifyPlaylist(msg *tg.Message) error {
 	process := w.ProcessingCreateAndFillSpotifyPlaylists.GetOrCreate(msg.Chat.ID)
 	switch process.Step {
 	case domain.ProcessCreateAndFillSpotifyPlaylistStart:
-		w.SendMsg(msg, "Send link of youtube playlist that you wanna transfer")
+		w.SendMsg(msg, "Send link of youtube YouTubePlaylist that you wanna transfer")
 		if err := w.ProcessingCreateAndFillSpotifyPlaylists.UpdateStep(domain.ProcessCreateAndFillSpotifyPlaylistEnd, msg.Chat.ID); err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
-			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			w.DeleteProcessingCreateAndFillSpotifyPlaylist(msg)
 			return err
 		}
 	case domain.ProcessCreateAndFillSpotifyPlaylistEnd:
-		playlist, err := w.YouTubeHandler.GetYoutubePlaylistByLink(msg.Text)
+		YouTubePlaylist, err := w.YouTubeHandler.GetYoutubePlaylistByLink(msg.Text)
 		if err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
-			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			w.DeleteProcessingCreateAndFillSpotifyPlaylist(msg)
 			return err
 		}
-		if err = w.ProcessingCreateAndFillSpotifyPlaylists.AddTitle(playlist.Title, msg.Chat.ID); err != nil {
+		if err = w.ProcessingCreateAndFillSpotifyPlaylists.AddTitle(YouTubePlaylist.Title, msg.Chat.ID); err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
-			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			w.DeleteProcessingCreateAndFillSpotifyPlaylist(msg)
 			return err
 		}
-		if err = w.ProcessingCreateAndFillSpotifyPlaylists.AddSongs(playlist.Songs, msg.Chat.ID); err != nil {
+		if err = w.ProcessingCreateAndFillSpotifyPlaylists.AddSongs(YouTubePlaylist.Songs, msg.Chat.ID); err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
-			w.DeleteProcessingSpotifySongByYoutubeMediaLink(msg)
+			w.DeleteProcessingCreateAndFillSpotifyPlaylist(msg)
 			return err
 		}
-		//Send Auth2.0 link
-		//Create playlist
-		//Fill playlist
-		//Return playlist
+		TelegramId := strconv.FormatInt(msg.Sender.ID, 10)
+
+		spotifyURL := "https://accounts.spotify.com/authorize"
+		params := url.Values{}
+		params.Add("response_type", "code")
+		params.Add("client_id", w.cfg.SpotifyCfg.ClientID)
+		params.Add("scope", "playlist-modify-public")
+		params.Add("redirect_uri", "http://localhost:8080/auth/spotify/callback")
+		params.Add("state", TelegramId)
+
+		w.SendMsg(msg, fmt.Sprintf("%s?%s", spotifyURL, params.Encode()))
+		UserProcess := fmt.Sprintf("SpotifyProcess%s", TelegramId)
+		token, err := w.CheckForToken(msg, UserProcess)
+		if err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingCreateAndFillSpotifyPlaylist(msg)
+			return err
+		}
+		process = w.ProcessingCreateAndFillSpotifyPlaylists.GetOrCreate(msg.Chat.ID)
+		playlistId, err := w.SpotifyHandler.CreateSpotifyPlaylist(process.Playlist.Title, token, w.cfg.SpotifyCfg.ClientID)
+		if err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingCreateAndFillSpotifyPlaylist(msg)
+			return err
+		}
+		SpotifyPlaylist, err := w.SpotifyHandler.FillSpotifyPlaylist(YouTubePlaylist, playlistId, token)
+		if err != nil {
+			w.SendMsg(msg, errors.ErrTryAgain)
+			w.DeleteProcessingCreateAndFillSpotifyPlaylist(msg)
+			return err
+		}
+		w.SendMsg(msg, fmt.Sprintf("Playlist title: %s, \n PLaylist Owner:%s, \n PLaylist description: %s, \n Playlist link: %s",
+			SpotifyPlaylist.Title, SpotifyPlaylist.Owner, SpotifyPlaylist.Description, SpotifyPlaylist.ExternalUrl))
+		w.DeleteProcessingCreateAndFillSpotifyPlaylist(msg)
+
+		//Create YouTubePlaylist
+		//Fill YouTubePlaylist
+		//Return YouTubePlaylist
 	}
 	return nil
+}
+
+func (w WorkFlows) DeleteProcessingCreateAndFillSpotifyPlaylist(msg *tg.Message) {
+	if err := w.ProcessingCreateAndFillSpotifyPlaylists.Delete(msg.Chat.ID); err != nil {
+		w.logger.ErrorFrmt("Error deleting process:", err)
+	}
 }
