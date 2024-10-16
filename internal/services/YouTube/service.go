@@ -30,45 +30,42 @@ func (y ServiceYouTube) GetYoutubeMediaByLink(link string) (*domain.Song, error)
 	return song, nil
 }
 
-// GetYoutubePlaylistByLink - Tested(OK)
+// GetYoutubePlaylistDataByLink - Tested(OK)
 func (y ServiceYouTube) GetYoutubePlaylistDataByLink(link string) (*domain.Playlist, error) {
-	var playlist = &domain.Playlist{}
 	id, err := GetID(link)
 	if err != nil {
-		return playlist, err
+		return nil, err
 	}
 	endpoint, err := y.CreateEndpointYoutubePlaylistParams(id)
 	if err != nil {
-		return playlist, err
+		return nil, err
 	}
 	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint)
 	if err != nil {
-		return playlist, err
+		return nil, err
 	}
 
-	err = FillPlaylistParams(resp, playlist)
+	playlist, err := FillPlaylistParams(resp)
 	if err != nil {
-		return playlist, err
+		return nil, err
 	}
 
-	var NextPageToken string
 	for {
-		endpoint, err = y.CreateEndpointYoutubePlaylistSongs(id, NextPageToken)
+		endpoint, err = y.CreateEndpointYoutubePlaylistSongs(id, playlist.NextPageToken)
 		if err != nil {
-			return playlist, err
+			return nil, err
 		}
+
 		resp, err = y.createAndExecuteRequest(http.MethodGet, endpoint)
 		if err != nil {
-			return playlist, err
+			return nil, err
 		}
-		playlist, err = FillPlaylistSongs(resp, playlist)
-		if err != nil {
-			return playlist, err
+		if err = FillPlaylistSongs(resp, playlist); err != nil {
+			return nil, err
 		}
 		if playlist.NextPageToken == "" {
 			return playlist, nil
 		}
-		NextPageToken = playlist.NextPageToken
 	}
 
 }

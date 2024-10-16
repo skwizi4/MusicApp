@@ -3,12 +3,14 @@ package YouTube
 import (
 	"MusicApp/internal/config"
 	logger "github.com/skwizi4/lib/logs"
+	"net/http"
 )
 
-const BaseUrl = "https://www.googleapis.com/youtube/v3/"
-const ServerUrl = "http://localhost:8080/auth/google/callback"
-const youtubeTrackDomen = "https://www.youtube.com/watch?v="
-const scope = "https://www.googleapis.com/auth/youtube"
+const (
+	BaseApiUrl        = "https://www.googleapis.com/youtube/v3/"
+	youtubeTrackDomen = "https://www.youtube.com/watch?v="
+	scope             = "https://www.googleapis.com/auth/youtube"
+)
 
 type ServiceYouTube struct {
 	Key       string
@@ -18,16 +20,18 @@ type ServiceYouTube struct {
 	ClientID  string
 	ServerUrl string
 	Scope     string
+	Client    *http.Client
 }
 
 func NewYouTubeService(cfg *config.Config) ServiceYouTube {
 	return ServiceYouTube{
-		BaseUrl:   BaseUrl,
+		BaseUrl:   BaseApiUrl,
 		logger:    logger.InitLogger(),
 		Key:       cfg.YoutubeCfg.Key,
 		ClientID:  cfg.YoutubeCfg.ClientID,
-		ServerUrl: ServerUrl,
+		ServerUrl: cfg.YoutubeCfg.RedirectUrl,
 		Scope:     scope,
+		Client:    &http.Client{},
 	}
 }
 
@@ -54,6 +58,9 @@ type (
 			Snippet struct {
 				Title        string `json:"title"`
 				ChannelTitle string `json:"videoOwnerChannelTitle"`
+				ResourceId   struct {
+					VideoId string `json:"videoId"`
+				} `json:"resourceId"`
 			} `json:"snippet"`
 		} `json:"items"`
 		NextPageToken string `json:"nextPageToken"`

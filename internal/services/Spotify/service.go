@@ -1,30 +1,16 @@
 package Spotify
 
 import (
-	"MusicApp/internal/config"
 	"MusicApp/internal/domain"
 	"bytes"
 	"fmt"
-	logger "github.com/skwizi4/lib/logs"
 	"io"
 	"log"
 	"net/http"
 )
 
-// todo - Refactor
-
-func NewSpotifyService(cfg *config.Config) ServiceSpotify {
-	return ServiceSpotify{
-		BaseUrl:      BaseUrl,
-		ClientId:     cfg.SpotifyCfg.ClientID,
-		ClientSecret: cfg.SpotifyCfg.ClientSecret,
-		Logger:       logger.InitLogger(),
-	}
-}
-
 func (s ServiceSpotify) GetSpotifyTrackMetadataByLink(link string) (*domain.Song, error) {
 	id, err := GetID(link)
-
 	if err != nil {
 		return nil, err
 	}
@@ -50,15 +36,12 @@ func (s ServiceSpotify) GetSpotifyTrackMetadataByLink(link string) (*domain.Song
 
 }
 
-// GetSpotifyPlaylistById todo - Check bugs
 func (s ServiceSpotify) GetSpotifyPlaylistDataByLink(link string) (*domain.Playlist, error) {
 	id, err := GetID(link)
-
 	if err != nil {
 		return nil, err
 	}
-	err = s.RequestToken()
-	if err != nil {
+	if err = s.RequestToken(); err != nil {
 		return nil, err
 	}
 	endpoint, err := s.MakeEndpointSpotifyPlaylistById(id)
@@ -99,13 +82,11 @@ func (s ServiceSpotify) GetSpotifyTrackByMetadata(data domain.MetaData) (*domain
 
 }
 func (s ServiceSpotify) CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId string) (string, error) {
-
 	endpoint, body, err := s.MakeEndpointCreateSpotifyPlaylist(Title, SpotifyUserId)
 	if err != nil {
 		return "", err
 	}
-	s.Token = AuthToken
-	resp, err := s.createAndExecuteCreateSpotifyPlaylistRequset(http.MethodPost, endpoint, body)
+	resp, err := s.createAndExecuteCreateSpotifyPlaylistRequset(http.MethodPost, endpoint, AuthToken, body)
 	if err != nil {
 		return "", err
 	}
@@ -124,8 +105,6 @@ func (s ServiceSpotify) FillSpotifyPlaylist(YouTubePlaylist *domain.Playlist, Sp
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(Song.Id)
-		fmt.Println(SpotifyPlaylistId)
 		req, _ := http.NewRequest("POST", fmt.Sprintf("https://api.spotify.com/v1/playlists/%s/tracks", SpotifyPlaylistId), bytes.NewBuffer([]byte(fmt.Sprintf(`{"uris": ["spotify:track:%s"]}`, Song.Id))))
 		req.Header.Add("Authorization", "Bearer "+AuthToken)
 		req.Header.Add("Content-Type", "application/json")
