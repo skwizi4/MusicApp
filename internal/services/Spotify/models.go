@@ -1,19 +1,29 @@
 package Spotify
 
 import (
+	"MusicApp/internal/config"
 	logger "github.com/skwizi4/lib/logs"
+	"net/http"
 )
 
-const BaseUrl = "https://api.spotify.com"
+const BaseApiUrl = "https://api.spotify.com"
 
 type ServiceSpotify struct {
-	BaseUrl              string
-	Logger               logger.GoLogger
-	ClientId             string
-	ClientSecret         string
-	Token                string
-	SpotifyResponseToken struct {
-		AccessToken string `json:"access_token"`
+	BaseUrl      string
+	Logger       logger.GoLogger
+	ClientId     string
+	ClientSecret string
+	Token        string
+	Client       *http.Client
+}
+
+func NewSpotifyService(cfg *config.Config) ServiceSpotify {
+	return ServiceSpotify{
+		BaseUrl:      BaseApiUrl,
+		ClientId:     cfg.SpotifyCfg.ClientID,
+		ClientSecret: cfg.SpotifyCfg.ClientSecret,
+		Logger:       logger.InitLogger(),
+		Client:       &http.Client{},
 	}
 }
 
@@ -81,5 +91,11 @@ type (
 	}
 	PlaylistCreateRequest struct {
 		Name string `json:"name"`
+	}
+	spotifyResponseToken struct {
+		AccessToken string `json:"access_token"`
+	}
+	PlaylistIdResponse struct {
+		Id string `json:"id"`
 	}
 )
