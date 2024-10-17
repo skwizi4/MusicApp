@@ -7,9 +7,12 @@ import (
 )
 
 const (
-	BaseApiUrl        = "https://www.googleapis.com/youtube/v3/"
-	youtubeTrackDomen = "https://www.youtube.com/watch?v="
-	scope             = "https://www.googleapis.com/auth/youtube"
+	BaseApiUrl               = "https://www.googleapis.com/youtube/v3/"
+	youtubeTrackDomen        = "https://www.youtube.com/watch?v="
+	scope                    = "https://www.googleapis.com/auth/youtube"
+	creatingPlaylistEndpoint = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,status"
+	fillingPlaylistEndpoint  = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet"
+	NilAuthToken             = ""
 )
 
 type ServiceYouTube struct {
