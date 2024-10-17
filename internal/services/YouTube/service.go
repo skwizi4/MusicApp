@@ -2,32 +2,25 @@ package YouTube
 
 import (
 	"MusicApp/internal/domain"
-	"errors"
 	"net/http"
 )
 
 // GetYoutubeMediaByLink  - Tested(OK)
 func (y ServiceYouTube) GetYoutubeMediaByLink(link string) (*domain.Song, error) {
-
 	id, err := GetID(link)
 	if err != nil {
 		return nil, err
 	}
-
 	endpoint, err := y.CreateEndpointYoutubeMediaById(id)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint)
-	if err != nil {
-		return nil, err
-	}
-	song, err := DecodeRespMediaById(resp)
+	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint, NilAuthToken, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return song, nil
+	return DecodeRespMediaById(resp)
 }
 
 // GetYoutubePlaylistDataByLink - Tested(OK)
@@ -40,12 +33,12 @@ func (y ServiceYouTube) GetYoutubePlaylistDataByLink(link string) (*domain.Playl
 	if err != nil {
 		return nil, err
 	}
-	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint)
+	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint, NilAuthToken, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	playlist, err := FillPlaylistParams(resp)
+	playlist, err := y.FillPlaylistParams(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -56,11 +49,11 @@ func (y ServiceYouTube) GetYoutubePlaylistDataByLink(link string) (*domain.Playl
 			return nil, err
 		}
 
-		resp, err = y.createAndExecuteRequest(http.MethodGet, endpoint)
+		resp, err = y.createAndExecuteRequest(http.MethodGet, endpoint, NilAuthToken, nil)
 		if err != nil {
 			return nil, err
 		}
-		if err = FillPlaylistSongs(resp, playlist); err != nil {
+		if err = y.FillPlaylistSongs(resp, playlist); err != nil {
 			return nil, err
 		}
 		if playlist.NextPageToken == "" {
@@ -76,37 +69,29 @@ func (y ServiceYouTube) GetYoutubeMediaByMetadata(data domain.MetaData) (*domain
 	if err != nil {
 		return nil, err
 	}
-
-	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint)
+	resp, err := y.createAndExecuteRequest(http.MethodGet, endpoint, NilAuthToken, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	song, err := DecodeRespMediaByMetadata(resp)
-	if err != nil {
-		return nil, err
-	}
-	return song, nil
+	return DecodeRespMediaByMetadata(resp)
 }
 
-// CreateYoutubePlaylist - Tested(OK)
+// CreateYoutubePlaylist - fix bugs
+
 func (y ServiceYouTube) CreateYoutubePlaylist(Title string, token string) (string, error) {
-	id, err := y.CreatePlaylist(token, Title)
+	endpoint, Body, err := y.MakeEndpointCreateYoutubePlaylist(Title)
 	if err != nil {
 		return "", err
 	}
-	return id, nil
+	body, err := y.createAndExecuteRequest(http.MethodPost, endpoint, token, Body)
+	if err != nil {
+		return "", err
+	}
+
+	return y.DecodeRespCreatePlaylist(body)
 
 }
 
 func (y ServiceYouTube) FillYoutubePlaylist(SpotifyPlaylist *domain.Playlist, YouTubePlaylistId, token string) (*domain.Playlist, error) {
-	YoutubePlaylist, err := y.WriteInPlaylist(token, YouTubePlaylistId, SpotifyPlaylist)
-	if err != nil {
-		return nil, err
-	}
-	if YoutubePlaylist == nil {
-		return nil, errors.New("YouTubePlaylist is nil")
-	}
-
-	return YoutubePlaylist, nil
+	return y.FillPlaylist(token, YouTubePlaylistId, SpotifyPlaylist)
 }

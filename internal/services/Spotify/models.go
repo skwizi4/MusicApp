@@ -6,7 +6,11 @@ import (
 	"net/http"
 )
 
-const BaseApiUrl = "https://api.spotify.com"
+const (
+	TokenEndpoint = "https://accounts.spotify.com/api/token"
+	BaseApiUrl    = "https://api.spotify.com"
+	NilAuthToken  = ""
+)
 
 type ServiceSpotify struct {
 	BaseUrl      string
@@ -81,12 +85,10 @@ type (
 				Album struct {
 					Name string `json:"name"`
 				} `json:"album"`
-				DurationMs  int `json:"duration_ms"`
 				ExternalURL struct {
 					Spotify string `json:"spotify"`
 				} `json:"external_urls"`
 			} `json:"items"`
-			Total int `json:"total"`
 		} `json:"tracks"`
 	}
 	PlaylistCreateRequest struct {
