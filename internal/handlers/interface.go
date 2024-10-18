@@ -20,6 +20,6 @@ type (
 		GetSpotifySongByMetaData(metadata *domain.MetaData) (*domain.Song, error)
 		GetSpotifyPlaylistByLink(spotifyLink string) (*domain.Playlist, error)
 		FillSpotifyPlaylist(playlist *domain.Playlist, playlistId, AuthToken string) (*domain.Playlist, error)
-		CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId string) (string, error)
+		CreateSpotifyPlaylist(Title, AuthToken string) (string, error)
 	}
 )

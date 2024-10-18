@@ -64,8 +64,13 @@ func (s ServiceSpotify) GetSpotifyPlaylistDataByLink(link string) (*domain.Playl
 
 }
 
-func (s ServiceSpotify) CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId string) (string, error) {
-	endpoint, body, err := s.MakeEndpointCreateSpotifyPlaylist(Title, SpotifyUserId)
+func (s ServiceSpotify) CreateSpotifyPlaylist(Title, AuthToken string) (string, error) {
+	userData, err := s.GetUserData(AuthToken)
+
+	if err != nil {
+		return "", err
+	}
+	endpoint, body, err := s.MakeEndpointCreateSpotifyPlaylist(Title, userData.ID)
 	if err != nil {
 		return "", err
 	}

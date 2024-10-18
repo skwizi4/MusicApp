@@ -17,8 +17,8 @@ func (h Handler) GetSpotifyPlaylistByLink(youtubeLink string) (*domain.Playlist,
 }
 
 // CreateSpotifyPlaylist todo refactor
-func (h Handler) CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId string) (string, error) {
-	return h.spotifyService.CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId)
+func (h Handler) CreateSpotifyPlaylist(Title, AuthToken string) (string, error) {
+	return h.spotifyService.CreateSpotifyPlaylist(Title, AuthToken)
 
 }
 func (h Handler) FillSpotifyPlaylist(playlist *domain.Playlist, playlistId, AuthToken string) (*domain.Playlist, error) {

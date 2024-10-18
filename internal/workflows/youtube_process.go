@@ -14,7 +14,7 @@ func (w WorkFlows) GetYoutubeSong(msg *tg.Message) error {
 
 	switch process.Step {
 	case domain.ProcessYoutubeMediaBySpotifySongLinkStart:
-		w.SendMsg(msg, "Send link of song that you wanna find")
+		w.SendMsg(msg, "Send link of spotify song that you wanna find")
 		if err := w.ProcessingYoutubeMediaBySpotifySongLink.UpdateStep(domain.ProcessYoutubeMediaBySpotifySongLinkEnd, msg.Chat.ID); err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)
 			w.DeleteProcessingYoutubeMediaBySpotifySongID(msg)
@@ -103,7 +103,7 @@ func (w WorkFlows) CreateAndFillYoutubePlaylist(msg *tg.Message) error {
 		TelegramId := strconv.FormatInt(msg.Sender.ID, 10)
 		w.SendMsg(msg, fmt.Sprintf("https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=https://www.googleapis.com/auth/youtube&access_type=offline&state=%s&prompt=consent",
 			w.cfg.YoutubeCfg.ClientID, w.cfg.YoutubeCfg.RedirectUrl, TelegramId))
-		UserProcess := fmt.Sprintf("YoutubeProcess%s", TelegramId)
+		UserProcess := fmt.Sprintf(YoutubeProcess, TelegramId)
 		token, err := w.CheckForToken(msg, UserProcess)
 		if err != nil {
 			w.SendMsg(msg, errors.ErrTryAgain)

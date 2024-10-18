@@ -7,7 +7,7 @@ type (
 		GetSpotifyTrackMetadataByLink(link string) (*domain.Song, error) // ok
 		GetSpotifyPlaylistDataByLink(link string) (*domain.Playlist, error)
 		GetSpotifyTrackByMetadata(data domain.MetaData) (*domain.Song, error)
-		CreateSpotifyPlaylist(Title, AuthToken, SpotifyUserId string) (string, error)
+		CreateSpotifyPlaylist(Title, AuthToken string) (string, error)
 		FillSpotifyPlaylist(YouTubePlaylist *domain.Playlist, SpotifyPlaylistId, AuthToken string) (*domain.Playlist, error)
 	}
 	YouTubeService interface {
