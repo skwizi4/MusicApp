@@ -32,6 +32,31 @@ func GetID(url string) (string, error) {
 }
 
 /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+//Get Users data
+/*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+func (s ServiceSpotify) GetUserData(AuthToken string) (*User, error) {
+	req, err := http.NewRequest(http.MethodGet, "https://api.spotify.com/v1/me", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+AuthToken)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	var userData *User
+	err = json.NewDecoder(resp.Body).Decode(&userData)
+	if err != nil {
+		return nil, err
+	}
+	if userData == nil || userData.ID == "" {
+		return nil, errs.Errorf("Spotify user is empty")
+	}
+	return userData, nil
+
+}
+
+/*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 //Creating and Executing Requests
 /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 func (s ServiceSpotify) createAndExecuteRequest(method, endpoint, AuthToken string, body io.Reader) (*io.ReadCloser, error) {
@@ -173,8 +198,8 @@ func (s ServiceSpotify) MakeEndpointSpotifyPlaylistById(id string) (string, erro
 	}
 	return "/v1/playlists/" + id, nil
 }
-func (s ServiceSpotify) MakeEndpointCreateSpotifyPlaylist(title, SpotifyUserId string) (string, io.Reader, error) {
-	if title == "" || SpotifyUserId == "" {
+func (s ServiceSpotify) MakeEndpointCreateSpotifyPlaylist(title, userId string) (string, io.Reader, error) {
+	if title == "" || userId == "" {
 		return "", nil, errs.Errorf("error, title or SpotifyUserId is nil")
 	}
 	body, err := json.Marshal(PlaylistCreateRequest{Name: title})
@@ -182,8 +207,7 @@ func (s ServiceSpotify) MakeEndpointCreateSpotifyPlaylist(title, SpotifyUserId s
 		return "", nil, errs.Errorf("can't marshal response: %v", err)
 	}
 
-	//todo refactor (  get user id and use it )
-	return fmt.Sprintf("/v1/users/" + "ya9tkj10lvw2uva3iy11sby75" + "/playlists"), bytes.NewBuffer(body), nil
+	return fmt.Sprintf("/v1/users/%s/playlists", userId), bytes.NewBuffer(body), nil
 }
 
 /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -226,7 +250,6 @@ func (s ServiceSpotify) decodeRespPlaylistId(body *io.ReadCloser) (*domain.Playl
 	if err := json.NewDecoder(*body).Decode(&spotifyPlaylistResponse); err != nil {
 		return nil, errs.Errorf("can't decode response: %v", err)
 	}
-	fmt.Println(spotifyPlaylistResponse.Description)
 	if spotifyPlaylistResponse.Name == "" || spotifyPlaylistResponse.Owner.DisplayName == "" ||
 		spotifyPlaylistResponse.ExternalURL.Spotify == "" || len(spotifyPlaylistResponse.Tracks.Items) == 0 {
 		return nil, errs.Errorf(errors.ErrInvalidParamsSpotify)

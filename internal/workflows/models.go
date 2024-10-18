@@ -14,6 +14,12 @@ import (
 	"time"
 )
 
+const (
+	YoutubeProcess  = "YoutubeProcess%s"
+	SpotifyProcess  = "SpotifyProcess"
+	SpotifyOauthUrl = "https://accounts.spotify.com/authorize"
+)
+
 type WorkFlows struct {
 	bot                                     *tg.Bot
 	logger                                  logger.GoLogger

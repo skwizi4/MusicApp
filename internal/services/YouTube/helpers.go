@@ -62,10 +62,11 @@ func (y ServiceYouTube) createAndExecuteRequest(method, endpoint, AuthToken stri
 		}
 		return &resp.Body, nil
 	case method == http.MethodPost && endpoint == fillingPlaylistEndpoint:
+		fmt.Println("here1")
 		if Body == nil || AuthToken == "" {
 			return nil, errs.Errorf("body or AuthToken is nil")
 		}
-		req, err := http.NewRequest("POST", endpoint, Body)
+		req, err := http.NewRequest(method, Url, Body)
 		if err != nil {
 			return nil, errs.Errorf("can't create request to create playlist: %v", err)
 
@@ -84,18 +85,24 @@ func (y ServiceYouTube) createAndExecuteRequest(method, endpoint, AuthToken stri
 			y.logger.ErrorFrmt(string(body))
 			return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
+		return &resp.Body, nil
 	case method == http.MethodPost && endpoint == creatingPlaylistEndpoint:
 		if Body == nil || AuthToken == "" {
 			return nil, errs.Errorf("body or AuthToken is nil")
 		}
-		req, err := http.NewRequest("POST", endpoint, Body)
+
+		req, err := http.NewRequest(method, Url, Body)
 		if err != nil {
 			return nil, errs.Errorf("can't create request to create playlist: %v", err)
+
 		}
 		req.Header.Add("Authorization", "Bearer "+AuthToken)
 		req.Header.Add("Content-Type", "application/json")
-		time.Sleep(750 * time.Millisecond)
 		resp, err := y.Client.Do(req)
+		if err != nil {
+			return nil, errs.Errorf("can't execute request to create playlist: %v", err)
+		}
+		time.Sleep(750 * time.Millisecond)
 		if resp.StatusCode != 200 {
 			if resp.StatusCode == 409 {
 				resp, err = http.DefaultClient.Do(req)
@@ -109,9 +116,7 @@ func (y ServiceYouTube) createAndExecuteRequest(method, endpoint, AuthToken stri
 			return nil, errs.Errorf(resp.Status)
 		}
 
-		if err != nil {
-			return nil, errs.Errorf("can't execute request to create playlist: %v", err)
-		}
+		return &resp.Body, nil
 	}
 
 	return nil, errs.Errorf("method or endpoint invalid")
@@ -154,14 +159,14 @@ func (y ServiceYouTube) MakeEndpointCreateYoutubePlaylist(title string) (string,
 		return "", nil, errs.Errorf(" title is empty")
 	}
 	payload := []byte(fmt.Sprintf(`{
-		"snippet": {
-			"title": "%s",
-			"description": "Playlist created by tg_bot MusicApp"
-		},
-		"status": {
-			"privacyStatus": "public"
-		}
-	}`, title))
+	"snippet": {
+		"title": "%s",
+		"description": "Playlist created by tg_bot MusicApp"
+	},
+	"status": {
+		"privacyStatus": "public"
+	}
+}`, title))
 	return creatingPlaylistEndpoint, bytes.NewBuffer(payload), nil
 }
 func (y ServiceYouTube) MakeEndpointFillingYoutubePlaylist(playlistId, songId string) (string, io.Reader, error) {
@@ -174,7 +179,7 @@ func (y ServiceYouTube) MakeEndpointFillingYoutubePlaylist(playlistId, songId st
 				}
 			}
 		}`, playlistId, songId))
-	return creatingPlaylistEndpoint, bytes.NewBuffer(payload), nil
+	return fillingPlaylistEndpoint, bytes.NewBuffer(payload), nil
 }
 
 /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -220,6 +225,7 @@ func (y ServiceYouTube) DecodeRespCreatePlaylist(body *io.ReadCloser) (string, e
 	if PlaylistId.ID == "" {
 		return "", errs.Errorf("nil playlist id")
 	}
+	fmt.Println(PlaylistId.ID)
 	return PlaylistId.ID, nil
 }
 
@@ -259,6 +265,7 @@ func (y ServiceYouTube) FillPlaylistSongs(body *io.ReadCloser, playlist *domain.
 
 func (y ServiceYouTube) FillPlaylist(token, youtubePlaylistId string, SpotifyPlaylist *domain.Playlist) (*domain.Playlist, error) {
 	songs := make([]domain.Song, len(SpotifyPlaylist.Songs))
+
 	for i, spotifyTrack := range SpotifyPlaylist.Songs {
 		youtubeMedia, err := y.GetYoutubeMediaByMetadata(domain.MetaData{Title: spotifyTrack.Title, Artist: spotifyTrack.Artist})
 		if err != nil {
@@ -277,7 +284,7 @@ func (y ServiceYouTube) FillPlaylist(token, youtubePlaylistId string, SpotifyPla
 		}
 
 	}
-	if SpotifyPlaylist.Title == "" || SpotifyPlaylist.Owner == "" || youtubePlaylistId == "" || len(songs) == 0 {
+	if len(songs) == 0 {
 		return nil, errs.Errorf("playlist is nil")
 	}
 	YoutubePlaylist := &domain.Playlist{

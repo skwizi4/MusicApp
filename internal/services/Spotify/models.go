@@ -100,4 +100,21 @@ type (
 	PlaylistIdResponse struct {
 		Id string `json:"id"`
 	}
+	User struct {
+		DisplayName  string `json:"display_name"`
+		ExternalUrls struct {
+			Spotify string `json:"spotify"`
+		} `json:"external_urls"`
+		Followers struct {
+			Href  interface{} `json:"href"`
+			Total int         `json:"total"`
+		} `json:"followers"`
+		Href   string `json:"href"`
+		ID     string `json:"id"`
+		Images []struct {
+			URL string `json:"url"`
+		} `json:"images"`
+		Type string `json:"type"`
+		URI  string `json:"uri"`
+	}
 )

@@ -10,8 +10,8 @@ const (
 	BaseApiUrl               = "https://www.googleapis.com/youtube/v3/"
 	youtubeTrackDomen        = "https://www.youtube.com/watch?v="
 	scope                    = "https://www.googleapis.com/auth/youtube"
-	creatingPlaylistEndpoint = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,status"
-	fillingPlaylistEndpoint  = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet"
+	creatingPlaylistEndpoint = "playlists?part=snippet,status"
+	fillingPlaylistEndpoint  = "playlistItems?part=snippet"
 	NilAuthToken             = ""
 )
 
